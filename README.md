@@ -104,13 +104,24 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
 
 4. Use the example below to train a model (install any required MATLAB toolboxes according to runtime prompts):
 
-    **Note:** `lambda` is a sensitivity parameter and requires tuning depending on your specific task. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. If you are short on time, we recommend using a slightly higher value—it might miss some weak signals but helps avoid mistaking noise for signals. **Avoid setting `lambda` too low**, as it may lead to excessive false positives and slow down training. Also, `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
+    **Note:** `lambda` is a sensitivity parameter and requires tuning depending on your specific task. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
 
+    ```matlab
+    % Parameters:
+    dataPath = ''; % Path to image data
+    POIPath = ''; % Path to POI image data
+    lambda = 0.0001; % Regularization intensity coefficient
+
+    DEPAFTrain(dataPath, POIPath, lambda);
+    ```
+    To further customize the training process, see the full version below:
+
+   <details style="margin-bottom:1em"> <summary>Show full version</summary>
     ```matlab
     % Required Parameters:
     dataPath = ''; % Path to image data
     POIPath = ''; % Path to POI image data
-    lambda = 0.1; % Regularization intensity coefficient
+    lambda = 0.0001; % Regularization intensity coefficient
 
     % Optional Parameters:
     % Data loading related parameters:
@@ -169,17 +180,16 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
         'patchNumForThreshSearch', patchNumForThreshSearch, ...
         'modelSavePath', modelSavePath);
     ```
+    </details>
 
 5. After training the model, perform predictions using the example below (install any required MATLAB toolboxes according to runtime prompts):
 
     **Note:** `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions formatted as “image height × image width × number of images” to ensure proper data loading and processing.
 
     ```matlab
-    % Required Parameters:
+    % Parameters:
     modelPath = ''; % Path to prediction model
     dataPath = ''; % Path to prediction data
-
-    % Optional Parameters:
     batchSize = 64; % Batch size for a single prediction
     patchSize = [64 64]; % Patch size for prediction (must be a power of 2)
     patchStride = [32 32]; % Patch stride for prediction
