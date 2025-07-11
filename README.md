@@ -117,6 +117,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     To further customize the training process, see the full version below:
 
    <details style="margin-bottom:1em"> <summary>Show full version</summary>
+     
     ```matlab
     % Required Parameters:
     dataPath = ''; % Path to image data
@@ -180,6 +181,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
         'patchNumForThreshSearch', patchNumForThreshSearch, ...
         'modelSavePath', modelSavePath);
     ```
+    
     </details>
 
 5. After training the model, perform predictions using the example below (install any required MATLAB toolboxes according to runtime prompts):
