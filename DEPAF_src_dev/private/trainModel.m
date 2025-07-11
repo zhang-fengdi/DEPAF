@@ -94,7 +94,6 @@ gradDecay = 0.9;
 gradDecaySq = 0.99;
 
 % Begin training:
-minValLoss = inf;
 iteration = 0;
 for epoch = 1:maxEpochs
 
@@ -112,9 +111,28 @@ for epoch = 1:maxEpochs
             IBatch = gpuArray(IBatch);
         end
 
+        % Soft-start lambda schedule:
+        if iteration < 2500
+            lambdaCurr = 0.01 * lambda;
+        elseif iteration < 5000
+            lambdaCurr = 0.1 * lambda;
+        else
+            lambdaCurr = lambda;
+        end
+        if iteration == 1
+            disp("[Iter " + iteration + "] Lambda warm-up started: " + lambdaCurr + " (1/100 of target)");
+            minValLoss = inf;
+        elseif iteration == 2500
+            disp("[Iter " + iteration + "] Lambda warm-up: " + lambdaCurr + " (1/10 of target)");
+            minValLoss = inf;
+        elseif iteration == 5000
+            disp("[Iter " + iteration + "] Lambda warm-up complete: " + lambdaCurr);
+            minValLoss = inf;
+        end
+
         % Calculate gradients using automatic differentiation and return loss function:
         [gradients,loss] = dlfeval(@modelGradients, dlnet, IBatch, ...
-            compPOI, BGPOI, lambda, tarActChanLogicIdx, verbose);
+            compPOI, BGPOI, lambdaCurr, tarActChanLogicIdx, verbose);
         loss = double(gather(extractdata(loss)));
 
         % Update neural network weights:
@@ -130,7 +148,7 @@ for epoch = 1:maxEpochs
                 modelPred(dlnet, valI, compPOI, BGPOI, tarActChanLogicIdx, 'predict');
 
             % Calculate validation loss:
-            valLoss = modelLoss(valI - valBG, valIFit, valIDenoised, lambda);
+            valLoss = modelLoss(valI - valBG, valIFit, valIDenoised, lambdaCurr);
             valLoss = double(gather(extractdata(valLoss)));
             clear valIFit valIDenoised valBG;
 
@@ -193,7 +211,7 @@ for epoch = 1:maxEpochs
 
                 else % If POI is fully decompressed, only apply learning rate decay:
                     learningRate = max(learningRate * 0.5, minLR);
-                    disp(['Learning rate decayed to: ' num2str(learningRate)]);
+                    disp("[Iter " + iteration + "] Learning rate decayed to: " + learningRate);
                 end
             end
 
@@ -203,10 +221,10 @@ for epoch = 1:maxEpochs
                     addpoints(lineValLoss,iteration,valLoss);
                 end
             else
-                disp("Epoch: " + epoch + ...
+                disp("[Iter " + iteration + "] " + ...
+                    "Epoch: " + epoch + ...
                     ", TrainLoss: " + loss + ...
                     ", ValLoss: " + valLoss + ...
-                    ", Patience: " + patience + ...
                     ", MinValLoss: " + minValLoss + ...
                     ", Patience: " + patience);
             end

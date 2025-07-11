@@ -6,13 +6,14 @@ To reproduce the paper results, follow these steps:
 
       | Part | Project name         | Downloads                                                                                                     |
       |:----:|:--------------------:|:-------------------------------------------------------------------------------------------------------------:|
-      | 1    | 2D SMLM benchmarking | [Dataset](https://zenodo.org/your-zenodo-link)             \| [Models](https://zenodo.org/your-zenodo-link)|
-      | 2    | Dynamic 2D SMLM      | [Dataset](https://zenodo.org/your-zenodo-link)             \| [Models](https://zenodo.org/your-zenodo-link)|
-      | 3    | 3D SMLM benchmarking | [Dataset](https://zenodo.org/your-zenodo-link)<sup>a</sup> \| [Models](https://zenodo.org/your-zenodo-link)|
-      | 4    | MERFISH analysis     | Dataset<sup>b</sup>                                        \| [Models](https://zenodo.org/your-zenodo-link)|
-      | 5    | Denoising estimation | [Dataset](https://zenodo.org/your-zenodo-link)             \| [Models](https://zenodo.org/your-zenodo-link)|
-      | 6    | 2PCI processing      | [Dataset](https://zenodo.org/your-zenodo-link)<sup>c</sup> \| [Models](https://zenodo.org/your-zenodo-link)|
-      | 7    | Background estimation| [Dataset](https://zenodo.org/your-zenodo-link)             \| [Models](https://zenodo.org/your-zenodo-link)|                                                                    |
+      | 1    | 2D SMLM benchmarking | [Dataset](https://zenodo.org/records/15862305/files/part1_2D_SMLM_benchmarking_datasets.zip?download=1)             \| [Models](https://zenodo.org/records/15862305/files/part1_2D_SMLM_benchmarking_models.zip?download=1)|
+      | 2    | Dynamic 2D SMLM      | [Dataset](https://zenodo.org/records/15862305/files/part2_dynamic_2D_SMLM_datasets.zip?download=1)             \| [Models](https://zenodo.org/records/15862305/files/part2_dynamic_2D_SMLM_models.zip?download=1)|
+      | 3    | 3D SMLM benchmarking | [Dataset](https://zenodo.org/records/15862305/files/part3_3D_SMLM_benchmarking_datasets.zip?download=1)<sup>a</sup> \| [Models](https://zenodo.org/records/15862305/files/part3_3D_SMLM_benchmarking_models.zip?download=1)|
+      | 4    | MERFISH analysis     | Dataset<sup>b</sup>                                        \| [Models](https://zenodo.org/records/15862305/files/part4_MERFISH_analysis_models.zip?download=1)|
+      | 5    | Denoising estimation | [Dataset](https://zenodo.org/records/15862305/files/part5_denoising_estimation_datasets.zip?download=1)             \| [Models](https://zenodo.org/records/15862305/files/part5_denoising_estimation_models.zip?download=1)|
+      | 6    | 2PCI processing      | [Dataset](https://zenodo.org/records/15862305/files/part6_2PCI_processing_datasets.zip?download=1)<sup>c</sup> \| [Models](https://zenodo.org/records/15862305/files/part6_2PCI_processing_models.zip?download=1)|
+      | 7    | Background estimation| [Dataset](https://zenodo.org/records/15862305/files/part7_background_estimation_datasets.zip?download=1)             \| [Models](https://zenodo.org/records/15862305/files/part7_background_estimation_models.zip?download=1)|
+      | 8    | Spike inference      | [Dataset](https://zenodo.org/records/15862305/files/part8_spike_inference_datasets.zip?download=1)             \| [Models](https://zenodo.org/records/15862305/files/part8_spike_inference_models.zip?download=1)|                                                                          |
 
       <sup>a</sup> The dataset for **3D SMLM benchmarking** can also be downloaded from [here](https://srm.epfl.ch/srm/dataset/challenge-3D-simulation/index.html).
       
