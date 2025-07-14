@@ -67,15 +67,15 @@ Here we highlight some of DEPAF’s results in addressing challenging imaging sc
 ### Millisecond-level dynamic 2D SMLM
 
 This video demonstrates DEPAF’s ability to achieve millisecond-level temporal resolution in 2D SMLM, 
-enabling observation of minute changes in live cells at the cytoskeletal level. (Left: raw data; Right: reconstructed result.)
+enabling observation of minute changes in live cells at the cytoskeletal level.
 
-[![Demo video 1](https://img.youtube.com/vi/YDDSJwJ8njY/0.jpg)](https://www.youtube.com/watch?v=YDDSJwJ8njY)
+[![Demo video 1](https://img.youtube.com/vi/ouvD0Bvy2mY/0.jpg)](https://www.youtube.com/watch?v=ouvD0Bvy2mY)
 
-### Denoising and background separation for low-SNR two-photon calcium imaging data of neurons
+### Denoising with background separation for low-SNR two-photon calcium imaging data
 
-This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging data of neurons, effectively separating the backgrounds while preserving neuronal activation signals.
+This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging data, effectively separating the backgrounds while preserving neuronal activation signals.
 
-[![Demo video 2](https://img.youtube.com/vi/XnMWy3xd3s0/0.jpg)](https://www.youtube.com/watch?v=XnMWy3xd3s0)
+[![Demo video 2](https://img.youtube.com/vi/9urDrTqq04I/0.jpg)](https://www.youtube.com/watch?v=9urDrTqq04I)
 
 ## Getting started
 
