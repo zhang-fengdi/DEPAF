@@ -104,7 +104,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
 
 4. Use the example below to train a model (install any required MATLAB toolboxes according to runtime prompts):
 
-    **Note:** `lambda` is a sensitivity parameter and requires tuning depending on your specific task. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
+    **Note:** `lambda` is a parameter that controls the sensitivity of signal detection and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
 
     ```matlab
     % Parameters:
