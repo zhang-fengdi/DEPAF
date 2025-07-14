@@ -104,8 +104,6 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
 
 4. Use the example below to train a model (install any required MATLAB toolboxes according to runtime prompts):
 
-    **Note:** `lambda` is a parameter that controls the sensitivity of signal detection and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
-
     ```matlab
     % Parameters:
     dataPath = ''; % Path to image data
@@ -114,6 +112,9 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
 
     DEPAFTrain(dataPath, POIPath, lambda);
     ```
+
+    **Note:** `lambda` is a parameter that controls the sensitivity of signal detection and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
+   
     To further customize the training process, see the full version below:
 
    <details style="margin-bottom:1em"> <summary>Show full version</summary>
@@ -184,9 +185,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     
     </details>
 
-5. After training the model, perform predictions using the example below (install any required MATLAB toolboxes according to runtime prompts):
-
-    **Note:** `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions formatted as “image height × image width × number of images” to ensure proper data loading and processing.
+6. After training the model, perform predictions using the example below (install any required MATLAB toolboxes according to runtime prompts):
 
     ```matlab
     % Parameters:
@@ -209,6 +208,8 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
         'outputBG', outputBG, ...
         'useGPU', useGPU);
     ```
+
+    **Note:** `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions formatted as “image height × image width × number of images” to ensure proper data loading and processing.
 
 ## License
 
