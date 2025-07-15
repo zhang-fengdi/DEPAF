@@ -14,9 +14,7 @@
 
 ## Overview
 
-<p align="center">
-  <img src="readme_assets/method_overview.png" width="800">
-</p>
+<img src="readme_assets/method_overview.png" width="800">
 
 **DE**ep **PA**ttern **F**itting (DEPAF) is a self-contrastive learning-based fluorescence microscopy signal detection framework featuring interference robustness *without* interference modeling, high generalizability, and unsupervised training within a compact, user-friendly design. 
 Leveraging the inherent structural regularity of fluorescence microscopy signals, such as point spread functions (PSFs), periodic fluctuations, and specific frequency distributions, DEPAF utilizes repetitive combinations of small data segments containing “patterns of interest” (POIs) to universally represent these diverse signals.
