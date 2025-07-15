@@ -14,7 +14,9 @@
 
 ## Overview
 
-<img src="readme_assets/method_overview.png" width="800" align="middle">
+<p align="center">
+  <img src="readme_assets/method_overview.png" width="800">
+</p>
 
 **DE**ep **PA**ttern **F**itting (DEPAF) is a self-contrastive learning-based fluorescence microscopy signal detection framework featuring interference robustness *without* interference modeling, high generalizability, and unsupervised training within a compact, user-friendly design. 
 Leveraging the inherent structural regularity of fluorescence microscopy signals, such as point spread functions (PSFs), periodic fluctuations, and specific frequency distributions, DEPAF utilizes repetitive combinations of small data segments containing “patterns of interest” (POIs) to universally represent these diverse signals.
@@ -67,7 +69,7 @@ Here we highlight some of DEPAF’s results in addressing challenging imaging sc
 ### Millisecond-level dynamic 2D SMLM
 
 This video demonstrates DEPAF’s ability to achieve millisecond-level temporal resolution in 2D SMLM, 
-enabling observation of minute changes in live cells at the cytoskeletal level.
+enabling real-time visualization of subtle cytoskeletal dynamics in live cells.
 
 [![Demo video 1](https://img.youtube.com/vi/ouvD0Bvy2mY/0.jpg)](https://www.youtube.com/watch?v=ouvD0Bvy2mY)
 
@@ -108,12 +110,12 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     % Parameters:
     dataPath = ''; % Path to image data
     POIPath = ''; % Path to POI image data
-    lambda = 0.0001; % Regularization intensity coefficient
+    lambda = 0.01; % Regularization strength
 
     DEPAFTrain(dataPath, POIPath, lambda);
     ```
 
-    **Note:** `lambda` is a parameter that controls the sensitivity of signal detection and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
+    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
    
     To further customize the training process, see the full version below:
 
@@ -123,7 +125,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     % Required Parameters:
     dataPath = ''; % Path to image data
     POIPath = ''; % Path to POI image data
-    lambda = 0.0001; % Regularization intensity coefficient
+    lambda = 0.01; % Regularization strength
 
     % Optional Parameters:
     % Data loading related parameters:
