@@ -113,7 +113,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     DEPAFTrain(dataPath, POIPath, lambda);
     ```
 
-    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. You can check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
+    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. The recommended `lambda` range is `1e-1` to `1e-4`. Use *log-scale grid search* with visual or quantitative evaluation to select the best value. You can also check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing.
    
     To further customize the training process, see the full version below:
 
@@ -210,6 +210,13 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     ```
 
     **Note:** `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions formatted as “image height × image width × number of images” to ensure proper data loading and processing.
+
+### About `DEPAF_src_dev` and `paper_reproduction/DEPAF_src_replication`
+
+This repository contains two versions of the DEPAF source code:
+
+* **`DEPAF_src_dev`**: This is the **latest development version** of DEPAF. It includes additional features, extended parameter options, and the most up-to-date model architecture. It is recommended for custom applications, adapting to new tasks, and exploring advanced usage.
+* **`paper_reproduction/DEPAF_src_replication`**: This is the **frozen version** used to generate all results in the original DEPAF paper. It ensures **exact reproducibility** of the published experiments and evaluation metrics. For strict replication of the paper results, please use this version.
 
 ## License
 
