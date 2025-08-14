@@ -23,7 +23,7 @@ By contrasting the consistency between different augmented views of the input da
 For more details, please see the paper: 
 ["*Self-contrastive learning enables interference-resilient and generalizable fluorescence microscopy signal detection without interference modeling*".](https://doi.org/10.1101/2025.04.08.645087)
 
-If you want to reproduce our paper results or refer to the preprocessing/postprocessing scripts, please visit the [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction).
+If you want to reproduce our paper results or demonstrate the code, please visit the [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction).
 
 ## Key features
 
@@ -237,4 +237,5 @@ Zhang, F. et al. Self-contrastive learning enables interference-resilient and ge
   year = {2025}
 }
 ```
+
 
