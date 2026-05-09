@@ -55,13 +55,15 @@ if ~isfile(correctedDataPath)
 
     % Load original image data and convert to uint16 format:
     I = uint16(loadData(dataPath));
+    refCdf = cumsum(imhist(I(:,:,1), 65536));
+    refCdf = refCdf ./ refCdf(end);
 
     % Perform bleaching correction:
     progressDisp(size(I,3)); % Initialize progress bar
     for i = 1:size(I,3)
         % Apply bleaching correction to the i-th frame (not needed for the 1st frame):
         if i > 1
-            I(:,:,i) = bleachCorrection(I(:,:,1), I(:,:,i));
+            I(:,:,i) = bleachCorrection(I(:,:,1), I(:,:,i), refCdf);
         end
 
         % Save current frame; create file for the first frame, append subsequent frames:

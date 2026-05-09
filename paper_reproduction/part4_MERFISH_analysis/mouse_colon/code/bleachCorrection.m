@@ -1,9 +1,11 @@
 function corrImg = bleachCorrection(refImg, tgtImg, refCdf)
 % Bleach correction using histogram matching
+%
 % Inputs:
 %   refImg - Reference image
 %   tgtImg - Target image to be corrected
 %   refCdf - Optional precomputed reference cumulative histogram
+%
 % Output:
 %   corrImg - Corrected image
 
