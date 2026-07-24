@@ -40,7 +40,7 @@ To reproduce the paper results, follow these steps:
           </tr>
           <tr>
             <td align="center">5</td>
-            <td align="center" colspan="2">Denoising estimation</td>
+            <td align="center" colspan="2">Denoising performance evaluation</td>
             <td align="center"><a href="https://zenodo.org/records/20093813/files/part5_denoising_estimation_datasets.zip?download=1">Dataset</a> | <a href="https://zenodo.org/records/20093813/files/part5_denoising_estimation_models.zip?download=1">Models</a></td>
           </tr>
           <tr>
@@ -85,7 +85,7 @@ To reproduce the paper results, follow these steps:
 
 ## Citation
 
-If you use all the models provided here or any of the datasets for 2D SMLM benchmarking, dynamic 2D SMLM, denoising estimation, or background estimation, please cite the following paper:
+If you use all the models provided here or any of the datasets for 2D SMLM benchmarking, dynamic 2D SMLM, denoising performance evaluation, or background estimation, please cite the following paper:
 
 Zhang, F. et al. Self-contrastive learning enables interference-resilient and generalizable fluorescence microscopy signal detection without interference modeling. *bioRxiv* (2025). [https://doi.org/10.1101/2025.04.08.645087](https://doi.org/10.1101/2025.04.08.645087)
 
