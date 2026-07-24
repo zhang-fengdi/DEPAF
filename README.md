@@ -16,9 +16,9 @@
 
 <img src="readme_assets/method_overview.png" width="800">
 
-**DE**ep **PA**ttern **F**itting (DEPAF) is a self-contrastive learning-based fluorescence microscopy signal detection framework featuring interference robustness *without* interference modeling, high generalizability, and unsupervised training within a compact, user-friendly design. 
-Leveraging the inherent structural regularity of fluorescence microscopy signals, such as point spread functions (PSFs), periodic fluctuations, and specific frequency distributions, DEPAF utilizes repetitive combinations of small data segments containing “patterns of interest” (POIs) to universally represent these diverse signals.
-By contrasting the consistency between different augmented views of the input data generated asynchronously via asymmetric model paths, DEPAF learns discriminative features determined solely by interference level rather than specific interference models. These features are embedded into a newly introduced subpixel-level dense representation scheme, ensuring strong discriminability between overlapping signals and thereby substantially improving the detectable signal density, even under conditions of strong noise and severe background interference with unknown types and parameters.
+**DE**ep **PA**ttern **F**itting (DEPAF) is a self-contrastive learning-based fluorescence microscopy signal detection framework that achieves interference robustness *without* interference modeling, while offering high generalizability across POI-representable signal classes, unsupervised training, and a compact, user-friendly design.
+Fluorescence microscopy signals often exhibit reusable local structures, such as point spread functions (PSFs), periodic fluctuations, and specific frequency distributions. DEPAF represents these structures using small data segments containing “patterns of interest” (POIs), which define the signal prototypes to be detected.
+Conceptually related to prior self-contrastive learning and asymmetric consistency methods, DEPAF implements an integrated signal-detection design in which a neural POI-fitting path and a POI-constrained decoding path are linked through signal-level consistency, combining sparse POI fitting, continuous-coordinate decoding, amplitude estimation, and signal resynthesis.
 
 For more details, please see the paper: 
 ["*Self-contrastive learning enables interference-resilient and generalizable fluorescence microscopy signal detection without interference modeling*".](https://doi.org/10.1101/2025.04.08.645087)
@@ -28,37 +28,37 @@ If you want to reproduce our paper results or demonstrate the code, please visit
 ## Key features
 
 - **Interference robustness**: Achieves accurate ultra-high-density signal detection (recognizing and localizing signals) even in severe noise and strong fluorescence backgrounds.
-- **Unsupervised training**: Trains without requiring any external ground-truth data.
-- **High generalizability**: Different POI examples can represent diverse fluorescence microscopy signals, allowing DEPAF to generalize to broader applications.
-- **High accessibility**: Adapting it to new tasks requires only providing example signal patterns and adjusting a single sensitivity parameter, with no specialized expertise required.
+- **Unsupervised training**: Trains the DEPAF model without requiring external ground-truth data.
+- **High generalizability**: Different POI examples enable the same framework to be reused across POI-representable fluorescence microscopy signal classes.
+- **High accessibility**: With suitable POI examples prepared for the imaging setting, adapting DEPAF requires calibration of a single dataset-level sensitivity parameter.
 
 ## Applications
 
-DEPAF excels in various fluorescence microscopy signal detection tasks by using different POI examples, including:
+DEPAF was evaluated across multiple fluorescence microscopy signal detection tasks using different POI examples, including:
 
 - **2D SMLM reconstruction with calibrated 2D PSFs as POI examples**:
-  - Improves temporal resolution from seconds to 76.8 ms while maintaining a spatial resolution of ~30 nm.
+  - Improves temporal resolution from several seconds to 76.8 ms while maintaining a spatial resolution of ~30 nm.
   - Enables super-resolution imaging of subtle cytoskeletal dynamics in live cells.
 
 - **3D SMLM reconstruction with calibrated 3D PSFs as POI examples**:
-  - Supports blinking densities at least 10 times higher than standard methods.
+  - Supports blinking densities at least 10 times higher than conventional methods.
   - Requires only an average photon count of 10.8% compared to typical STORM data labeled with Alexa647.
 
-- **3D MERFISH spot signal detection with fitted elliptical Gaussian PSFs as POI examples**:
-  - Increases the RNA detection rate by 97% compared to the conventional method.
-  - Improves the correlation between detected RNA copy numbers and FPKM by 0.12 compared to the conventional method.
+- **3D MERFISH spot signal detection with a fitted elliptical Gaussian PSF as the POI example**:
+  - Increases barcode-assigned candidate calls by 97% compared with the conventional method.
+  - Improves the correlation between gene-level candidate counts and FPKM by 0.12 compared with the conventional method.
 
 - **Two-photon calcium imaging processing with fitted spike signals and standard Gaussian PSFs as POI examples**:
   - Performs denoising, background removal, weak spike detection, and neuron segmentation in a unified pipeline.
   - Outperforms methods of the same unsupervised type with 40% higher precision and 43% higher recall.
-  - Matches top-performing supervised methods while reducing the required training data and labels by 2 and 1 orders of magnitude, respectively.
+  - Is competitive with top-performing supervised methods while reducing the required training data and labels by 2 and 1 orders of magnitude, respectively.
 
 - **Fluorescence background estimation with homogeneous patches as POI examples**:
-  - Achieves accurate estimation of *arbitrary inhomogeneous* fluorescence backgrounds.
-  - Correlations with ground truths exceeding 0.95 across simulated datasets with various background variation scales and SNR levels.
+  - Achieves accurate estimation of diverse inhomogeneous fluorescence backgrounds.
+  - Correlations with ground truth consistently exceeding 0.97 across simulated datasets with diverse background variation scales and SNR levels.
 
-- **Using more well-designed POI examples:**
-  - Unlocks infinite possibilities...
+- **Using additional well-designed POI examples:**
+  - May extend DEPAF to additional POI-representable signal classes.
 
 ## Representative results
 
@@ -66,8 +66,8 @@ Here we highlight some of DEPAF’s results in addressing challenging imaging sc
 
 ### Millisecond-level dynamic 2D SMLM
 
-This video demonstrates DEPAF’s ability to achieve millisecond-level temporal resolution in 2D SMLM, 
-enabling real-time visualization of subtle cytoskeletal dynamics in live cells.
+This video demonstrates DEPAF’s ability to achieve millisecond-level temporal resolution in 2D SMLM,
+enabling visualization of subtle cytoskeletal dynamics in live cells.
 
 [![Demo video 1](https://img.youtube.com/vi/ouvD0Bvy2mY/0.jpg)](https://www.youtube.com/watch?v=ouvD0Bvy2mY)
 
@@ -113,7 +113,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     DEPAFTrain(dataPath, POIPath, lambda);
     ```
 
-    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. The recommended `lambda` range is `1e-1` to `1e-4`. Use *coarse-to-fine log-scale grid search* with visual or quantitative evaluation to select the best value. You can also check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing. DEPAF typically runs in about 1–6 hours on an NVIDIA RTX 3090 GPU, depending on task complexity.
+    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. The recommended `lambda` range is `1e-1` to `1e-4`. Use *coarse-to-fine log-scale grid search* with visual or quantitative evaluation to select the best value. You can also check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing. Across the evaluated tasks, DEPAF training time ranged from 37.1 min to 23.4 h on an NVIDIA RTX 3090 GPU, depending on task complexity.
    
     To further customize the training process, see the full version below:
 
@@ -237,5 +237,3 @@ Zhang, F. et al. Self-contrastive learning enables interference-resilient and ge
   year = {2025}
 }
 ```
-
-
