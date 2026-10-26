@@ -27,17 +27,17 @@ oriZCenter = mean(1:oriChannel);
 if scale(1) >= 1
     tarWid = ceil(oriWid * scale(1));
 else
-    tarWid = floor(oriWid * scale(1));
+    tarWid = floor(oriWid * scale(1) + eps(oriWid * scale(1)));
 end
 if scale(2) >= 1
     tarLen = ceil(oriLen * scale(2));
 else
-    tarLen = floor(oriLen * scale(2));
+    tarLen = floor(oriLen * scale(2) + eps(oriLen * scale(2)));
 end
 if scale(3) >= 1
     tarChannel = ceil(oriChannel * scale(3));
 else
-    tarChannel = floor(oriChannel * scale(3));
+    tarChannel = floor(oriChannel * scale(3) + eps(oriChannel * scale(3)));
 end
 
 % Calculate the center of the scaled image:

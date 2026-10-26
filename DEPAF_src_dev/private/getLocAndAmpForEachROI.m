@@ -64,7 +64,7 @@ end
 % Amplitude estimation:
 ROIFitNoisy = zeros(2, 2, 'single');
 ROIFitNoisy(ind) = grayValIFitNoisy;
-% conv2 function is different from dlconv; conv2 does not flip POI
+% Convolve the ROI fitting map with the POI.
 ROIFitNoisyConv = conv2(ROIFitNoisy, POI, 'full');
 amplitude = max(ROIFitNoisyConv, [], 'all');
 end

@@ -91,6 +91,7 @@ disp(['[Training] Performing ' num2str(upsamplRatio(2)) 'x upsampling in x and '
 I = max(0, imgResizeCenterKeep(I, [upsamplRatio(1:2) 1], interpMethod));
 valI = max(0, imgResizeCenterKeep(valI, [upsamplRatio(1:2) 1], interpMethod));
 normMax = prctile(I, 99.9, 'all');
+validateattributes(normMax, {'numeric'}, {'scalar', 'real', 'finite', 'positive'}, mfilename, 'normMax');
 I = I ./ normMax;
 valI = valI ./ normMax;
 
@@ -137,6 +138,7 @@ checkPath(modelSavePath); % Check path
 [~, dataName, dataExt] = fileparts(dataPath); % Get data file name
 modelID = char(datetime('now','Format','MM-dd-HH-mm-ss')); % Model ID
 savePath = [modelSavePath '\Mdl_' modelID '_by_' dataName '.mat'];
+assertNewOutputFiles({savePath});
 save(savePath, 'dlnet', 'finalEpoch', 'minValLoss', 'bestEpoch');
 
 % Randomly select samples for optimal segmentation threshold search (using all samples may cause memory overflow):
@@ -145,7 +147,8 @@ IPatch = IPatch(:,:,:,patchIdxForThreshSearching);
 
 % Predict training set images using the model in batches:
 disp('[Training] Predicting training images using the model...');
-progressDisp(patchNumForThreshSearch); % Initialize progress bar
+progressFile = progressDisp(patchNumForThreshSearch); % Initialize this run's progress bar
+progressCleanup = onCleanup(@() progressDisp(-2, 1, progressFile));
 IFitPatch = zeros(patchSize(1), patchSize(2), channelNum, patchNumForThreshSearch, 'single');
 IDenoisedPatch = zeros(patchSize(1), patchSize(2), channelNum, patchNumForThreshSearch, 'single');
 for i = 1:miniBatchSize:patchNumForThreshSearch
@@ -171,9 +174,10 @@ for i = 1:miniBatchSize:patchNumForThreshSearch
     IDenoisedPatch(:,:,:,batchRange) = gather(extractdata(IDenoisedPatchBatch));
 
     % Refresh progress bar:
-    progressDisp(0, min(miniBatchSize, patchNumForThreshSearch-i+1));
+    progressDisp(0, min(miniBatchSize, patchNumForThreshSearch-i+1), progressFile);
 end
-progressDisp(-1); % End progress bar
+progressDisp(-1, 1, progressFile); % End progress bar
+clear progressCleanup;
 clear dlnet IPatchBatch IFitPatchBatch IDenoisedPatchBatch BGPatchBatch;
 
 % Sum channels for IDenoisedPatch:
@@ -347,7 +351,7 @@ end
 % Set default values for optional parameters:
 trainIdxRangeDefault = randperm(numI, round(0.8*numI));
 valIdxRangeDefault = setdiff(1:numI, trainIdxRangeDefault);
-upsamplRatioDefault = [min(1.5,widI) min(1.5,lenI)];
+upsamplRatioDefault = [min(1.5,widI) min(1.5,lenI) 1];
 patchSizeDefault = [min(512,widI) min(512,lenI)];
 
 % Add optional parameters:
@@ -376,6 +380,14 @@ addParameter(params, 'patchNumForThreshSearch', 512, validPosInt);
 % Parse and validate optional parameters:
 parse(params, varargin{:});
 
+% Reject inputs that cannot produce training and validation batches:
+if isempty(params.Results.trainIdxRange) || isempty(params.Results.valIdxRange)
+    error('DEPAF:EmptyDataSplit', 'Training and validation indices must both be nonempty.');
+end
+if params.Results.miniBatchSize > params.Results.trainPatchNum
+    error('DEPAF:InvalidBatchSize', 'miniBatchSize must not exceed trainPatchNum.');
+end
+
 % Complex validation for optional parameter trainIdxRange:
 if any(params.Results.trainIdxRange > numI)
     error('''trainIdxRange'' contains indices larger than the total number of images %d.', numI);
@@ -394,7 +406,8 @@ if ~isempty(params.Results.trainIdxRange) && ~isempty(params.Results.valIdxRange
 end
 
 % Complex validation for optional parameter modelSavePath:
-if any(ismember(params.Results.modelSavePath, '<>:"|?*'))
+checkedPath = regexprep(params.Results.modelSavePath, '^[A-Za-z]:[\\/]', '');
+if any(ismember(checkedPath, '<>:"|?*'))
     error('Invalid characters in ''modelSavePath''.');
 end
 

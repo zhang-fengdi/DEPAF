@@ -3,15 +3,15 @@ function BGPOI = BGPOIGeneration(POI)
 %
 %  This function takes a signal POI as input and calculates a central region covering
 %  95% of the total sum of the signal POI. Then, based on the area of this central region,
-%  it generates a background POI matrix (a homogeneous patch) that is 3 times the area of the center.
+%  it generates a background POI matrix (a homogeneous patch) with each non-singleton dimension 3 times that of the central region.
 %
 %  Input Parameters:
 %    POI - A 2D or multidimensional signal POI matrix. If it is a multidimensional matrix,
 %          the function first reduces it to a 2D matrix for processing.
 %
 %  Output Parameters:
-%    BGPOI - The generated background POI. This is a homogeneous patch with an area that is
-%            3 times the central region, which covers 95% of the total sum of the signal POI.
+%    BGPOI - Homogeneous patch with each non-singleton dimension 3 times that of the
+%            central region covering 95% of the total sum of the signal POI.
 
 % Find the 95% central region of the POI:
 POI = sum(POI, 3);

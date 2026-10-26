@@ -30,7 +30,8 @@ thresholdList = threshRange(1) : stepSize : threshRange(2);
 thresholdNum = length(thresholdList);
 
 % Begin searching for optimal threshold:
-progressDisp(thresholdNum); % Initialize progress bar
+progressFile = progressDisp(thresholdNum); % Initialize this search's progress bar
+progressCleanup = onCleanup(@() progressDisp(-2, 1, progressFile));
 loss = zeros(thresholdNum, 1, 'single');
 if useParallel
     parfor i = 1:thresholdNum
@@ -38,7 +39,7 @@ if useParallel
             IDenoised, POI, thresholdList(i), interpMethod);
 
         % Refresh progress bar:
-        progressDisp(0);
+        progressDisp(0, 1, progressFile);
     end
 else
     for i = 1:thresholdNum
@@ -46,12 +47,13 @@ else
             IDenoised, POI, thresholdList(i), interpMethod);
 
         % Refresh progress bar:
-        progressDisp(0);
+        progressDisp(0, 1, progressFile);
     end
 end
 
 % Terminate progress bar:
-progressDisp(-1);
+progressDisp(-1, 1, progressFile);
+clear progressCleanup;
 
 optimalThresh = thresholdList(find(loss == min(loss),1,'last'));
 end

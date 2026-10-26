@@ -91,8 +91,21 @@ switch ext
             end
 
             % Return loaded data:
-            varargout{1} = matObj.(info(1).name);
-            varargout{1} = varargout{1}(rowRange, colRange, zRange);
+            partialClasses = {'double', 'single', 'uint8', 'uint16', 'uint32', 'uint64', ...
+                'int8', 'int16', 'int32', 'int64', 'logical'};
+            % MatFile supports only regularly spaced increasing index ranges.
+            regularRanges = iRegularRange(rowRange) && iRegularRange(colRange) && iRegularRange(zRange);
+            if regularRanges && H5F.is_hdf5(filePath) && ...
+                    ismember(info(1).class, partialClasses) && ~info(1).sparse
+                if numel(info(1).size) == 2
+                    varargout{1} = matObj.(info(1).name)(rowRange, colRange);
+                else
+                    varargout{1} = matObj.(info(1).name)(rowRange, colRange, zRange);
+                end
+            else
+                varargout{1} = matObj.(info(1).name);
+                varargout{1} = varargout{1}(rowRange, colRange, zRange);
+            end
 
         else % Load all variables in .mat file
             if length(info) == 1
@@ -147,5 +160,14 @@ end
 if length(varargout)==1 && isnumeric(varargout{1}) && ...
         ~isa(varargout{1}, 'single')
     varargout{1} = single(varargout{1});
+end
+end
+
+function tf = iRegularRange(idx)
+tf = isnumeric(idx) && isreal(idx) && isvector(idx) && ~isempty(idx) && ...
+    all(isfinite(idx)) && all(idx >= 1) && all(idx == fix(idx));
+if tf && numel(idx) > 1
+    increments = diff(idx);
+    tf = increments(1) > 0 && all(increments == increments(1));
 end
 end

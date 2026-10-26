@@ -30,8 +30,8 @@ learningRate = 1e-3; % Learning rate
 minLR = 1e-4; % Lower limit for learning rate decay
 miniBatchSize = 8; % Batch size per iteration
 maxEpochs = 1000; % Maximum number of training epochs
-valFreq = 20; % Validation frequency (validate every valFreq batches)
-maxPatience = 20; % Early stopping patience (stop training if validation loss does not decrease for this many epochs)
+valFreq = 20; % Validation frequency (validate every valFreq iterations, starting at iteration 1)
+maxPatience = 20; % Early stopping patience (patience limit in validation checks)
 learnBG = true; % Whether to learn background
 verbose = true; % Display processing as images
 useGPU = true; % Use GPU
@@ -71,10 +71,10 @@ dataPath = ''; % Path to prediction data
 
 % Optional Parameters:
 batchSize = 64; % Batch size for a single prediction
-patchSize = [64 64]; % Patch size for prediction (must be a power of 2)
+patchSize = [64 64]; % Patch size for prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
 patchStride = [32 32]; % Patch stride for prediction
 resSavePath = '.\'; % Path to save prediction results
-outputISyn = false; % Output noiseless synthetic images
+outputISyn = false; % Output synthetic images
 outputBG = false; % Output background images
 useGPU = true; % Use GPU
 

@@ -12,7 +12,7 @@ function DEPAFPred(varargin)
 %    patchSize - Patch size used for prediction.
 %    patchStride - Stride size used for patch-based prediction.
 %    resSavePath - Path to save the results.
-%    outputISyn - Whether to output noiseless synthetic images.
+%    outputISyn - Whether to output synthetic images.
 %    outputBG - Whether to output background images.
 %    useGPU - Whether to use GPU for prediction.
 %
@@ -36,6 +36,23 @@ clear userSetParams;
 disp('[Prediction] Loading model...');
 load(modelPath,'dlnet', 'POI', 'upsamplRatio', 'normMax', 'normMin', ...
     'learnBG', 'optimalThresh', 'interpMethod', 'modelID');
+validateattributes(normMax, {'numeric'}, {'scalar', 'real', 'finite', 'positive'}, mfilename, 'normMax');
+
+% Check all requested output files before prediction:
+[~, dataName, dataExt] = fileparts(dataPath); % Get prediction data name
+dataFileName = [dataName dataExt]; % Get prediction data name
+predResSavePath = [resSavePath '\PredRes_' dataName ...
+    '_by_Mdl_' modelID '.mat']; % Get save path name
+outputPaths = {predResSavePath};
+if outputISyn
+    savePathISyn = [resSavePath '\ISyn_' dataName '_by_Mdl_' modelID '.mat'];
+    outputPaths{end+1} = savePathISyn;
+end
+if outputBG
+    savePathBG = [resSavePath '\BG_' dataName '_by_Mdl_' modelID '.mat'];
+    outputPaths{end+1} = savePathBG;
+end
+assertNewOutputFiles(outputPaths);
 
 % Generate background POI:
 if learnBG
@@ -49,7 +66,8 @@ end
 
 % Start batch prediction:
 disp('[Prediction] Predicting...');
-progressDisp(numI); % Initialize progress bar
+progressFile = progressDisp(numI); % Initialize this run's progress bar
+progressCleanup = onCleanup(@() progressDisp(-2, 1, progressFile));
 loc = cell(numI, 1);
 amplitude = cell(numI, 1);
 if outputISyn
@@ -120,34 +138,30 @@ for idxI = 1:batchSize:numI
     amplitude(idxI:min(idxI+batchSize-1, numI)) = amplitudeBatch;
 
     % Refresh progress bar:
-    progressDisp(0, min(batchSize, numI-idxI+1));
+    progressDisp(0, min(batchSize, numI-idxI+1), progressFile);
 end
 
 % End progress bar:
-progressDisp(-1);
+progressDisp(-1, 1, progressFile);
+clear progressCleanup;
 
 % Save prediction results:
 disp('[Prediction] Saving prediction results...');
 checkPath(resSavePath); % Check path
-[~, dataName, dataExt] = fileparts(dataPath); % Get prediction data name
-dataFileName = [dataName dataExt]; % Get prediction data name
-predResSavePath = [resSavePath '\PredRes_' dataName ...
-    '_by_Mdl_' modelID '.mat']; % Get save path name
+assertNewOutputFiles(outputPaths);
 varOrder = {'loc', 'widI', 'lenI', 'amplitude', 'modelID', 'dataFileName'};
 save(predResSavePath, 'loc', 'widI', 'lenI', 'amplitude', ...
     'modelID', 'dataFileName', 'varOrder');
 
-% Save noiseless synthetic image:
+% Save synthetic image:
 if outputISyn
-    disp('[Prediction] Saving noiseless synthetic image...');
-    savePathISyn = [resSavePath '\ISyn_' dataName '_by_Mdl_' modelID '.mat'];
+    disp('[Prediction] Saving synthetic image...');
     save(savePathISyn, 'ISyn', '-v7.3');
 end
 
 % Save background image:
 if outputBG
     disp('[Prediction] Saving background image...');
-    savePathBG = [resSavePath '\BG_' dataName '_by_Mdl_' modelID '.mat'];
     save(savePathBG, 'BG', '-v7.3');
 end
 end
@@ -197,7 +211,7 @@ upsamplRatio = load(params.Results.modelPath,'upsamplRatio');
 upsamplRatio = upsamplRatio.upsamplRatio;
 
 % Set default values for optional parameters:
-patchSizeDefault = [min(256,widI) min(256,lenI)]; % Patch size for prediction (must be a power of 2)
+patchSizeDefault = [min(256,widI) min(256,lenI)]; % Patch size for prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
 patchStrideDefault = ceil(patchSizeDefault/2); % Stride for patch-based prediction
 
 % Add optional parameters:

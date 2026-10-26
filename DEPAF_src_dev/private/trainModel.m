@@ -5,7 +5,7 @@ function [bestdlnet, epoch, minValLoss, bestEpoch] = trainModel( ...
 % trainModel trains a model for POI fitting and denoising.
 %
 %  This function trains a deep learning network for POI fitting and denoising of images.
-%  The model is trained iteratively, evaluating performance on a validation set after each epoch
+%  The model is trained iteratively, evaluating performance on a validation set at the specified iteration frequency
 %  and monitoring the loss function.
 %
 %  Input Parameters:
@@ -18,8 +18,8 @@ function [bestdlnet, epoch, minValLoss, bestEpoch] = trainModel( ...
 %    maxEpochs - Maximum number of epochs.
 %    encoderDepth - Depth of the encoder.
 %    lambda - Regularization coefficient.
-%    valFreq - Validation frequency.
-%    maxPatience - Patience level.
+%    valFreq - Validation interval in iterations, starting at iteration 1.
+%    maxPatience - Patience limit in validation checks.
 %    minLR - Minimum learning rate.
 %    verbose - Whether to display the training process.
 %    useGPU - Whether to use GPU for computation.
@@ -141,7 +141,7 @@ for epoch = 1:maxEpochs
             trailingAvgSq,iteration,learningRate,gradDecay,gradDecaySq);
 
         % Calculate validation loss at specified frequency and plot:
-        if mod(iteration, valFreq) == 1
+        if mod(iteration-1, valFreq) == 0
 
             % Use model to predict on validation set:
             [valIFit, valIDenoised, valBG] = ...

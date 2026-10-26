@@ -57,7 +57,10 @@ for i = 1 : stride(1) : widI
         % Extract data:
         IFitPatch = gather(extractdata(IFitPatch));
         IDenoisedPatch = gather(extractdata(IDenoisedPatch));
-        BGPatch = gather(extractdata(BGPatch));
+        if isa(BGPatch, 'dlarray')
+            BGPatch = extractdata(BGPatch);
+        end
+        BGPatch = gather(BGPatch);
 
         % Apply Gaussian weighting:
         IFitPatch = IFitPatch .* weights;

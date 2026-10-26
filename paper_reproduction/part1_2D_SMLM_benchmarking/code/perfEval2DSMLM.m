@@ -37,7 +37,8 @@ end
 
 % Begin evaluation:
 disp('[Evaluation] Starting evaluation...')
-progressDisp(numI); % Initialize progress bar
+progressFile = progressDisp(numI); % Initialize this evaluation's progress bar
+progressCleanup = onCleanup(@() progressDisp(-2, 1, progressFile));
 if useParallel
     parfor k = 1:numI
         % Sort by intensity to prioritize matching higher intensity points:
@@ -70,7 +71,7 @@ if useParallel
         JacIdx(k) = TP / (TP+FN+FP);
 
         % Refresh progress bar:
-        progressDisp(0);
+        progressDisp(0, 1, progressFile);
     end
 else
     for k = 1:numI
@@ -104,12 +105,13 @@ else
         JacIdx(k) = TP / (TP+FN+FP);
 
         % Refresh progress bar:
-        progressDisp(0);
+        progressDisp(0, 1, progressFile);
     end
 end
 
 % Terminate progress bar:
-progressDisp(-1);
+progressDisp(-1, 1, progressFile);
+clear progressCleanup;
 
 % Calculate average evaluation results:
 disp('[Evaluation] Calculating average evaluation results...');

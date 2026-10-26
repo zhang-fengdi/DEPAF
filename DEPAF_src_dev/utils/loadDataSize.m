@@ -2,14 +2,14 @@ function [widI,lenI,numI] = loadDataSize(filePath)
 % loadDataSize retrieves the dimensions of a data file.
 %
 %  This function reads the size information of a specified file, supporting .mat and .tif/.tiff file formats.
-%  It returns the width, length, and number of images contained in the file.
+%  It returns the height, width, and number of images contained in the file.
 %
 %  Input Parameters:
 %    filePath - Path to the data file.
 %
 %  Output Parameters:
-%    widI - Width of the image.
-%    lenI - Length of the image.
+%    widI - Height of the image (rows).
+%    lenI - Width of the image (columns).
 %    numI - Number of images contained in the file.
 %
 %  Notes:
@@ -40,8 +40,8 @@ switch ext
         end
     case {'.tif','.tiff'}
         t = Tiff(filePath, 'r');
-        widI = getTag(t, 'ImageWidth');     % Retrieve width
-        lenI = getTag(t, 'ImageLength');    % Retrieve height
+        widI = getTag(t, 'ImageLength');    % Retrieve height (rows)
+        lenI = getTag(t, 'ImageWidth');     % Retrieve width (columns)
         numI = 1;
         while ~lastDirectory(t)
             nextDirectory(t);
