@@ -46,16 +46,18 @@ loc = filterWithinRange(loc, 5, 60, 5, 60);
 disp('[Evaluation] Starting evaluation...')
 matchThresh = 1;
 pixNMSize = 100;
-[eff, JacIdx, rmseLateral, rmseAxial] = perfEval3DSMLM(loc, tarLoc, 1, 100);
+[eff, JacIdx, lateralError, axialError] = perfEval3DSMLM(loc, tarLoc, matchThresh, pixNMSize);
 
 % Save evaluation results:
 disp('[Evaluation] Saving evaluation results...');
 checkPath(evalResSavePath);
 [~, tarLocDataName] = fileparts(tarLocPath); % Get data file name
 [~, predResName] = fileparts(predResPath); % Get data file name
-savePath = [evalResSavePath '\EvalRes_' predResName(9:end-4) ...
-    '_by_Mdl_' modelID '.mat'];
-save(savePath, 'eff', 'JacIdx', 'rmseLateral', 'rmseAxial', ...
+savePath = fullfile(evalResSavePath, ['EvalRes_' predResName(9:end) '_meanDistance.mat']);
+if isfile(savePath)
+    error('DEPAF:OutputExists', 'Refusing to overwrite existing output: %s', savePath);
+end
+save(savePath, 'eff', 'JacIdx', 'lateralError', 'axialError', ...
     'modelID', 'predResName', 'tarLocDataName');
 
 

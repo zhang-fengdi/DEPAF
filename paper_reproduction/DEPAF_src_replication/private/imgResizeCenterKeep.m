@@ -7,7 +7,7 @@ function IResized = imgResizeCenterKeep(I, scale, interpMethod)
 %
 %  Input Parameters:
 %    I - Original image.
-%    scale - Scaling factors represented as a three-element vector [x-axis scale, y-axis scale, z-axis scale].
+%    scale - Scaling factors represented as a three-element vector [height (y) scale, width (x) scale, depth (z) scale].
 %    interpMethod - Interpolation method, such as 'spline', 'nearest', 'linear', 'cubic'.
 %
 %  Output Parameters:

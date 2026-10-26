@@ -16,7 +16,7 @@ for int = [1000 7000 40000]
             patchSize = [256 256]; % Patch size for block prediction (must be a power of 2)
             patchStride = [128 128]; % Stride for block prediction
             resSavePath = '..\models\'; % Path to save prediction results
-            outputISyn = false; % Output noise-free synthetic images
+            outputISyn = false; % Output model-synthesized images
             outputBG = true; % Output background images
             useGPU = true; % Use GPU for computation
 

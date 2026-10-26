@@ -7,7 +7,7 @@ function IResized = imgResizeCenterKeep(I, scale, interpMethod)
 %
 %  Input Parameters:
 %    I - Original image.
-%    scale - Scaling factors represented as a three-element vector [x-axis scale, y-axis scale, z-axis scale].
+%    scale - Scaling factors represented as a three-element vector [height (y) scale, width (x) scale, depth (z) scale].
 %    interpMethod - Interpolation method, such as 'spline', 'nearest', 'linear', 'cubic'.
 %
 %  Output Parameters:
@@ -23,17 +23,17 @@ ZRange = 1:oriHt;
 if scale(1) >= 1
     tarWid = ceil(oriWid * scale(1));
 else
-    tarWid = floor(oriWid * scale(1));
+    tarWid = floor(oriWid * scale(1) + eps(oriWid * scale(1)));
 end
 if scale(2) >= 1
     tarLen = ceil(oriLen * scale(2));
 else
-    tarLen = floor(oriLen * scale(2));
+    tarLen = floor(oriLen * scale(2) + eps(oriLen * scale(2)));
 end
 if scale(3) >= 1
     tarHt = ceil(oriHt * scale(3));
 else
-    tarHt = floor(oriHt * scale(3));
+    tarHt = floor(oriHt * scale(3) + eps(oriHt * scale(3)));
 end
 
 % Obtain query coordinates for scaling:

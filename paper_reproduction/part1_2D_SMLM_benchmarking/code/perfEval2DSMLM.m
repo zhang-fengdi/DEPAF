@@ -1,7 +1,7 @@
 function perfEval2DSMLM(dataPath, ...
     locPath, tarLocPath, matchThresh, pixNMSize, ...
     resSavePath, useParallel, parNum)
-% perfEval Evaluates localization performance metrics.
+% perfEval2DSMLM Evaluates localization performance metrics.
 %
 %  This function evaluates the error between the predicted localization results and the actual labels, calculating various metrics,
 %  such as average localization error, Jaccard index, and efficiency.
@@ -52,18 +52,18 @@ if useParallel
         % Calculate evaluation results for each image:
         tarNum = size(tarLoc{k},1);
         predNum = size(predLoc{k},1);
-        RMSECount = 0;
+        distanceSum = 0;
         matchNum = 0;
         for i = 1:predNum
-            RMSE = sqrt(sum((predLoc{k}(i,1:2) - tarLoc{k}).^2,2));
-            [minRMSE,idx] = min(RMSE);
-            if minRMSE <= matchThresh
-                RMSECount = RMSECount + minRMSE;
+            distances = sqrt(sum((predLoc{k}(i,1:2) - tarLoc{k}).^2,2));
+            [minDistance,idx] = min(distances);
+            if minDistance <= matchThresh
+                distanceSum = distanceSum + minDistance;
                 matchNum = matchNum + 1;
                 tarLoc{k}(idx,:) = inf;
             end
         end
-        locErr(k) = RMSECount / matchNum;
+        locErr(k) = distanceSum / matchNum;
         TP = matchNum;
         FP = predNum - matchNum;
         FN = tarNum - matchNum;
@@ -86,18 +86,18 @@ else
         % Calculate evaluation results for each image:
         tarNum = size(tarLoc{k},1);
         predNum = size(predLoc{k},1);
-        RMSECount = 0;
+        distanceSum = 0;
         matchNum = 0;
         for i = 1:predNum
-            RMSE = sqrt(sum((predLoc{k}(i,:) - tarLoc{k}).^2,2));
-            [minRMSE,idx] = min(RMSE);
-            if minRMSE <= matchThresh
-                RMSECount = RMSECount + minRMSE;
+            distances = sqrt(sum((predLoc{k}(i,:) - tarLoc{k}).^2,2));
+            [minDistance,idx] = min(distances);
+            if minDistance <= matchThresh
+                distanceSum = distanceSum + minDistance;
                 matchNum = matchNum + 1;
                 tarLoc{k}(idx,:) = inf;
             end
         end
-        locErr(k) = RMSECount / matchNum;
+        locErr(k) = distanceSum / matchNum;
         TP = matchNum;
         FP = predNum - matchNum;
         FN = tarNum - matchNum;

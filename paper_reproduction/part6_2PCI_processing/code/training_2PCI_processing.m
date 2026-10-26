@@ -200,7 +200,7 @@ batchSize = 1024; % Batch size for single prediction
 patchSize = [win 1]; % Patch size for prediction (must be a power of 2)
 patchStride = [round(win/2) 1]; % Stride for patch-based prediction
 resSavePath = [saveFolderName '_1D']; % Path to save prediction results
-outputISyn = true; % Predict and output noise-free synthetic images
+outputISyn = true; % Predict and output model-synthesized images
 outputBG = false; % Predict and output background
 useGPU = true; % Use GPU for computation
 
@@ -330,7 +330,7 @@ batchSize = 256; % Batch size for single prediction
 patchSize = 2^encoderDepth * floor(min(widI,lenI) / 2^encoderDepth) * [1 1]; % Patch size for sampling
 patchStride = patchSize / 2; % Stride for patch-based prediction
 resSavePath = [saveFolderName '_2D']; % Path to save prediction results
-outputISyn = false; % Predict and output noise-free synthetic images
+outputISyn = false; % Predict and output model-synthesized images
 outputBG = false; % Predict and output background
 useGPU = true; % Use GPU for computation
 

@@ -84,7 +84,7 @@ for predPartName = {'part11', 'part12', 'part21', 'part22'} % Prediction data pa
     patchSize = [1024 1]; % Patch size for prediction (must be a power of 2)
     patchStride = [512 1]; % Stride during patch-based prediction
     resSavePath = [saveFolderName '_1D']; % Path to save prediction results
-    outputISyn = true; % Predict and output noise-free synthetic images
+    outputISyn = true; % Predict and output model-synthesized images
     outputBG = true; % Predict and output background
     useGPU = true; % Use GPU for computation
 
@@ -138,7 +138,7 @@ for predPartName = {'part11', 'part12', 'part21', 'part22'} % Prediction data pa
     patchSize = 2^encoderDepth * floor(min(widI,lenI) / 2^encoderDepth) * [1 1]; % Patch size for prediction
     patchStride = patchSize / 2; % Stride during patch-based prediction
     resSavePath = [saveFolderName '_2D']; % Path to save prediction results
-    outputISyn = false; % Predict and output noise-free synthetic images
+    outputISyn = false; % Predict and output model-synthesized images
     outputBG = false; % Predict and output background
     useGPU = true; % Use GPU for computation
 

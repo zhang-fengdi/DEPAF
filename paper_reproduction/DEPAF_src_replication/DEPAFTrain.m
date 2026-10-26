@@ -51,11 +51,12 @@ disp('[Training] Upsampling and normalizing POI...');
 POI = POI - min(POI, [], [1 2]);
 disp(['[Training] Performing ' num2str(upsamplRatio(2)) 'x upsampling in x, ' ...
     num2str(upsamplRatio(1)) 'x in y, and ' num2str(upsamplRatio(3)) 'x in z for POI...']);
+axisNames = 'yxz';
 for dim = 1:3
     if mod(ceil(size(POI,dim)*upsamplRatio(dim)),2) == 0
         upsamplRatio(dim) = ...
             (ceil(size(POI,dim)*upsamplRatio(dim))+0.5)/size(POI,dim);
-        disp(['[Training] Detected even dimension after upsampling POI in ' char('x'+(dim-1)) ...
+        disp(['[Training] Detected even dimension after upsampling POI in ' axisNames(dim) ...
             ' direction; adjusting upsampling ratio to ' num2str(upsamplRatio(dim)) 'x.']);
     end
 end
