@@ -52,7 +52,6 @@ function infoFile = ReadInfoFile(varargin)
 %
 % 'verbose'/boolean(true): Determines if the function hides progress
 %--------------------------------------------------------------------------
-%--------------------------------------------------------------------------
 % Jeffrey Moffitt
 % September 5, 2012
 % jeffmoffitt@gmail.com
@@ -63,7 +62,6 @@ function infoFile = ReadInfoFile(varargin)
 %--------------------------------------------------------------------------
 % Hardcoded variables
 %--------------------------------------------------------------------------
-quiet = 1;
 flags = {'file', 'verbose', 'path'};
 
 %--------------------------------------------------------------------------
@@ -101,11 +99,14 @@ for parameterIndex = 1:parameterCount,
     parameterValue = varargin{parameterIndex*2};
     switch parameterName
         case 'file'
-            infFileName = CheckParameter(parameterValue, 'string', 'file');
+            validateattributes(parameterValue, {'char'}, {}, mfilename, 'file');
+            infFileName = parameterValue;
         case 'path'
-            dataPath = CheckParameter(parameterValue, 'string', 'path');
+            validateattributes(parameterValue, {'char'}, {}, mfilename, 'path');
+            dataPath = parameterValue;
         case 'verbose'
-            verbose = CheckParameter(parameterValue, 'boolean', 'verbose');
+            validateattributes(parameterValue, {'logical','numeric'}, {'scalar','binary'}, mfilename, 'verbose');
+            verbose = parameterValue;
         otherwise
             error(['The parameter ''' parameterName ''' is not recognized by the function ''' mfilename '''.']);
     end

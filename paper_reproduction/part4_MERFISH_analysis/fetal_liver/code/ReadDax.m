@@ -31,9 +31,6 @@ function [movie, infoFile, infoFileRoi] = ReadDax(varargin)
 % 'infoFile'/info file structure ([]): An info file for
 % the files to be loaded.
 %
-% 'imageDimensions'/3x1 integer array ([]): The size of the movies to be
-% loaded.
-%
 % 'verbose'/boolean (true): Display or hide function progress
 %
 % 'orientation'/string ('normal'): Control the relative rotation of the data
@@ -70,7 +67,6 @@ function [movie, infoFile, infoFileRoi] = ReadDax(varargin)
 %--------------------------------------------------------------------------
 % Hardcoded Variables
 %--------------------------------------------------------------------------
-quiet = 0;
 orientationValues = {'normal','nd2'};
 flags = {'file', 'infoFile', 'startFrame','endFrame', 'verbose', ...
     'orientation', 'path','allFrames'};
@@ -122,25 +118,34 @@ for parameterIndex = 1:parameterCount,
     parameterValue = varargin{parameterIndex*2};
     switch parameterName
         case 'file'
-            fileName = CheckParameter(parameterValue, 'string', 'file');
+            validateattributes(parameterValue, {'char'}, {}, mfilename, 'file');
+            fileName = parameterValue;
         case 'allFrames'
-             allFrames = CheckParameter(parameterValue, 'boolean', 'allFrames');
+             validateattributes(parameterValue, {'logical','numeric'}, {'scalar','binary'}, mfilename, 'allFrames');
+             allFrames = parameterValue;
         case 'startFrame'
-            startFrame = CheckParameter(parameterValue, 'positive', 'startFrame');
+            validateattributes(parameterValue, {'numeric'}, {'positive'}, mfilename, 'startFrame');
+            startFrame = parameterValue;
         case 'endFrame'
-            endFrame = CheckParameter(parameterValue, 'positive', 'endFrame');
+            validateattributes(parameterValue, {'numeric'}, {'positive'}, mfilename, 'endFrame');
+            endFrame = parameterValue;
         case 'subregion'
-            subregion = CheckParameter(parameterValue,'array','subregion');
+            validateattributes(parameterValue, {'numeric'}, {}, mfilename, 'subregion');
+            subregion = parameterValue;
         case 'infoFile'
-            infoFile = CheckParameter(parameterValue, 'struct', 'infoFile');
+            validateattributes(parameterValue, {'struct'}, {}, mfilename, 'infoFile');
+            infoFile = parameterValue;
         case 'maxMemory'
-            maxMemory = CheckParameter(parameterValue, 'positive', 'maxMemory');
+            validateattributes(parameterValue, {'numeric'}, {'positive'}, mfilename, 'maxMemory');
+            maxMemory = parameterValue;
         case 'verbose'
-            verbose = CheckParameter(parameterValue, 'boolean', 'verbose');
+            validateattributes(parameterValue, {'logical','numeric'}, {'scalar','binary'}, mfilename, 'verbose');
+            verbose = parameterValue;
         case 'orientation'
             orientation = CheckList(parameterValue, orientationValues, 'orientation');
         case 'path'
-            dataPath = CheckParameter(parameterValue, 'string', 'path');
+            validateattributes(parameterValue, {'char'}, {}, mfilename, 'path');
+            dataPath = parameterValue;
         otherwise
             error(['The parameter ''' parameterName ''' is not recognized by the function ''' mfilename '''.']);
     end

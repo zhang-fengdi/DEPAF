@@ -50,7 +50,7 @@ DEPAF was evaluated across multiple fluorescence microscopy signal detection tas
 
 - **Two-photon calcium imaging processing with fitted spike signals and standard Gaussian PSFs as POI examples**:
   - Performs denoising, background removal, weak spike detection, and neuron segmentation in a unified pipeline.
-  - Outperforms methods of the same unsupervised type, increasing precision and recall by 40.5 and 42.9 percentage points, respectively, compared with CaImAn batch.
+  - Outperforms methods of the same unsupervised type, increasing precision and recall by 40.6 and 43.6 percentage points, respectively, compared with CaImAn batch.
   - Is competitive with top-performing supervised methods while using approximately 1.3% of the training pixels and 21.8% of the ground-truth masks used by SUNS batch.
 
 - **Fluorescence background estimation with homogeneous patches as POI examples**:

@@ -132,7 +132,7 @@ mergedIdxs = mergedIdxs(validMaskIdxs);
 validMaskIdxs = validMaskIdxs(validMaskIdxs);
 numMask = size(masks, 3);
 
-% Step 3: Perform unique, order-independent merging based on a larger COM threshold threshCOM.
+% Step 3: Perform unique merging based on a larger COM threshold threshCOM.
 % Logic: If multiple masks meet the condition, only one "may" merge.
 % Merge condition: Target mask must be the closest COM for all candidate masks.
 tempMasks = masks >= max(masks,[],[1 2]) * threshBinarizeMask;
@@ -142,7 +142,7 @@ COMDistMatrix = inf(numMask);
 for i = 1:numMask
     for j = i+1:numMask
         COMDist = norm(COMs(i,:)-COMs(j,:),2);
-        if COMDist <= threshCOM && i ~= j
+        if COMDist <= threshCOM
             mergeMatrix(i,j) = true;
             COMDistMatrix(i,j) = COMDist;
         end
@@ -160,7 +160,10 @@ for j = 1:numMask
 end
 % Execute merging:
 for i = 1:numMask
-    idxsToBeMerged = mergeMatrix(i,:);
+    if ~validMaskIdxs(i)
+        continue;
+    end
+    idxsToBeMerged = mergeMatrix(i,:) & validMaskIdxs';
     if any(idxsToBeMerged)
         masks(:,:,i) = masks(:,:,i) + sum(masks(:,:,idxsToBeMerged),3, 'native');
         mergedIdxs{i} = [mergedIdxs{i}; vertcat(mergedIdxs{idxsToBeMerged})];
@@ -225,7 +228,8 @@ for i = 1:numMask
             area1 = sum(tempMasks(:,:,i), 'all');
             area2 = sum(tempMasks(:,:,j), 'all');
             if max(area1, area2) > avgAreaMask
-                if area1 > area2
+                % Keep the lower-index mask when areas are equal.
+                if area1 > area2 || (area1 == area2 && i > j)
                     validMaskIdxs(i) = false;
                 else
                     validMaskIdxs(j) = false;
