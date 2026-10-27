@@ -12,7 +12,7 @@ for density = [3775 7550 18874 33974 56623 113246]
             dataPath = ['..\datasets\data_' num2str(int) '_' num2str(density) '_PerlinBG.tif']; % Path of the prediction data
 
             batchSize = 10; % Batch size for single prediction
-            patchSize = [256 256]; % Patch size for block prediction (must be a power of 2)
+            patchSize = [256 256]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
             patchStride = [128 128]; % Stride for block prediction
             resSavePath = '..\models\'; % Path to save prediction results
             outputISyn = false; % Whether to predict and output noiseless synthetic images

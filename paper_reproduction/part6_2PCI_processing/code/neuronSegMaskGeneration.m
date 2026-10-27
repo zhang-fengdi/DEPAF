@@ -21,7 +21,7 @@ function masks = neuronSegMaskGeneration(loc, widMask, lenMask, ...
 %   threshCOM - Secondary threshold for merging based on COM distance.
 %   threshIoU - IoU threshold for mask merging based on overlap.
 %   threshConsume - Threshold for merging masks based on consume rate (overlap as a fraction of area).
-%   threshConsec - Threshold for consecutive frames to retain in mask merging.
+%   threshConsec - Required consecutive-frame span; k requires k+1 distinct frames.
 %
 % Outputs:
 %   masks - 3D logical array where each slice represents a binary mask for a neuron.
@@ -246,11 +246,9 @@ mergeAim = 1:numMask; % Target mask index for merging, initially set to self.
 for k = 1:length(i)
     iMergeAim = mergeAim(i(k));
     jMergeAim = mergeAim(j(k));
-    if iMergeAim < jMergeAim
-        mergeAim(j(k)) = iMergeAim;
-    else
-        mergeAim(i(k)) = jMergeAim;
-    end
+    low = min(iMergeAim, jMergeAim);
+    high = max(iMergeAim, jMergeAim);
+    mergeAim(mergeAim == high) = low;
 end
 % Execute merging:
 for i = 1:numMask
@@ -268,10 +266,10 @@ mergedIdxs = mergedIdxs(validMaskIdxs);
 validMaskIdxs = validMaskIdxs(validMaskIdxs);
 numMask = size(masks, 3);
 
-% Step 6: Filter based on continuous frames (threshConsec) using mergedIdxs.
+% Step 6: Require threshConsec + 1 consecutive distinct frames (span threshConsec).
 for i = 1:numMask
     activeIdxs = mergedIdxs{i};
-    activeIdxs = sort(activeIdxs, 'ascend');
+    activeIdxs = unique(activeIdxs);
     idxGaps = activeIdxs(threshConsec+1:end) - activeIdxs(1:end-threshConsec);
     if ~any(idxGaps == threshConsec)
         validMaskIdxs(i) = false;

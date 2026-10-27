@@ -9,8 +9,8 @@ lambda = 0.1; % Regularization intensity coefficient
 
 % Optional Parameters:
 % Data loading related parameters:
-trainIdxRange = 1:8; % Training set patch sampling index range
-valIdxRange = 9:10; % Validation set patch sampling index range
+trainIdxRange = 1:8; % Training data index range
+valIdxRange = 9:10; % Validation data index range
 
 % Model saving related parameters:
 modelSavePath = '.\'; % Path to save the model

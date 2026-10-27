@@ -260,9 +260,8 @@ if DoThis
                     otherwise
                 end
             end
-        catch
-            display('Serious error somewhere here...check file for corruption');
-            movie = zeros(frameDim);
+        catch ME
+            rethrow(ME);
         end
 
     %-----------------------------------------------------------------

@@ -10,8 +10,8 @@ POIPath = '..\datasets\calibrated_PSF_dynamic_2D_SMLM.mat'; % POI image data pat
 lambda = 0.013; % Regularization intensity coefficient
 
 % Data loading parameters:
-trainIdxRange = 1:5000; % Training set patch sampling range index
-valIdxRange = 1:5000; % Validation set patch sampling range index
+trainIdxRange = 1:5000; % Training data index range
+valIdxRange = 1:5000; % Validation data index range
 
 % Model saving parameters:
 modelSavePath = '..\models\'; % Path to save the model

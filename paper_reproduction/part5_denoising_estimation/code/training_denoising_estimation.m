@@ -19,8 +19,8 @@ for i = 1:size(LUT,1)
     lambda = LUT(i,3); % Regularization intensity coefficient
 
     % Data loading parameters:
-    trainIdxRange = 1:78; % Training set patch sampling range index
-    valIdxRange = 79:80; % Validation set patch sampling range index
+    trainIdxRange = 1:78; % Training data index range
+    valIdxRange = 79:80; % Validation data index range
 
     % Model saving parameters:
     modelSavePath = '..\models\'; % Path to save the model

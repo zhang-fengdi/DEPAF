@@ -85,6 +85,10 @@ switch ext
                 colRange = 1:info(1).size(2);
             end
             if length(info(1).size) == 2
+                if ~(strcmp(zRange, 'all') || ...
+                        (isnumeric(zRange) && isscalar(zRange) && zRange == 1))
+                    error('DEPAF:InvalidFrameIndex', 'A 2D MAT file contains only frame 1.');
+                end
                 zRange = 1;
             elseif strcmp(zRange, 'all')
                 zRange = 1:info(1).size(3);

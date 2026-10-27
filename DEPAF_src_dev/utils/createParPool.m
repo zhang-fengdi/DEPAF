@@ -21,6 +21,9 @@ if isempty(currentPool) || currentPool.NumWorkers ~= desiredParNum
             parpool('Processes', desiredParNum);
             poolCreated = true;  % If successful, set flag to exit loop
         catch ME
+            if numRetries + 1 >= maxRetries
+                rethrow(ME);
+            end
             disp(ME.message);
             % If creation fails, wait and retry:
             disp(['Attempt ', num2str(numRetries + 1), ...

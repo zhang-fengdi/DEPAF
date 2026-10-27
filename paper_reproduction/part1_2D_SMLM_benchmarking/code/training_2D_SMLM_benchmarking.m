@@ -12,8 +12,8 @@ for density = [3775 7550 18874 33974 56623 113246]
         lambda = lookupLambda(int, density); % Regularization intensity coefficient
 
         % Data loading parameters:
-        trainIdxRange = 1:78; % Training set patch sampling range index
-        valIdxRange = 79:80; % Validation set patch sampling range index
+        trainIdxRange = 1:78; % Training data index range
+        valIdxRange = 79:80; % Validation data index range
 
         % Model saving parameters:
         modelSavePath = '..\models\'; % Path to save model

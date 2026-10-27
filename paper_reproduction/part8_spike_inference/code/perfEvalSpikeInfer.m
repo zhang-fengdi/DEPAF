@@ -12,7 +12,7 @@ function [dist, errRate] = perfEvalSpikeInfer(A, B, q, tol)
 %     B        - Predicted spike train, as a row vector of spike times.
 %     q        - (Optional) Victor–Purpura cost parameter (unit: 1/second), controlling the penalty for shifting spikes.
 %     tol      - (Optional) Matching tolerance in seconds. If specified, spikes within this range are considered matched.
-%                Default is 0, which requires exact matches.
+%                Default is 0.5; use 0 for exact one-to-one matching.
 %
 %   Output:
 %     dist     - Victor–Purpura distance between A and B, indicating temporal dissimilarity.
@@ -54,7 +54,7 @@ end
 dist = D(m+1, n+1);
 
 % Compute |A ∩ B|:
-if tol > 0
+if tol >= 0
     % Tolerance-based matching: each A(i) can match only one unmatched B(j)
     matchedB = false(1,n);
     interCount = 0;
@@ -74,7 +74,7 @@ end
 if m + n > 0
     F1 = 2 * interCount / (m + n);
 else
-    F1 = 0;
+    F1 = 1;
 end
 errRate = 1 - F1;
 end

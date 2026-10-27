@@ -8,6 +8,8 @@ frameInterval = 5; % Frame interval for slices
 widI = 1536; % Image width
 lenI = 1536; % Image length
 savePath = '..\models\'; % Path to save models
+retrainModel = false; % Use the published model unless training is requested
+modelPath = fullfile(savePath, 'Mdl_06-22-15-15-42_by_data_all.mat');
 trainDataSelectNum = 64; % Number of training data images randomly selected from the dataset
 codebookPath = '..\datasets\CodeBookSubPool1_fetalLiver.mat';
 filePath = '..\datasets\sequential\'; % Path of data files
@@ -75,14 +77,14 @@ end
 if dataFilesMissing
     disp('Organizing and generating data...');
     % Initialize image matrix and maximum feature points:
-    beadI = zeros(widI, lenI, sliceNum);
+    beadI = zeros(widI, lenI, bitNum);
     maxFeaturePts = 0;
     maxFeaturePtsIdx = 0;
 
     % Load and process calibration bead images, also calculate feature points:
     disp('Loading and processing calibration bead images...');
-    for sliceIdx = 1:sliceNum
-        % Load image data of the current slice:
+    for sliceIdx = 1:bitNum
+        % Load the bead image for the current bit:
         singleBeadI = ReadDax([filePath beadFileNamesForBit{sliceIdx} '.dax'], ...
             'startFrame', 1, 'endFrame', 40, 'verbose', false);
 
@@ -108,9 +110,9 @@ if dataFilesMissing
 
     % Calculate transformation matrices for registration:
     disp('Calculating transformation matrices for registration...');
-    transforms = cell(sliceNum, 1);
+    transforms = cell(bitNum, 1);
     referenceImage = beadI(:, :, maxFeaturePtsIdx); % Select the image with the most feature points as the reference
-    for sliceIdx = 1:sliceNum
+    for sliceIdx = 1:bitNum
         % Calculate the transformation matrix between the current slice image and the reference image:
         transforms{sliceIdx} = getTform(referenceImage, beadI(:, :, sliceIdx));
     end
@@ -190,76 +192,83 @@ if POIFilesMissing
 end
 
 % ---------------------------- Model Training -----------------------------
-disp('Training model...');
-% Data path and POI path:
-dataPath = '..\datasets\data_all.mat'; % Image data path
-POIDir = dir(['..\datasets\fitted_elliptical_Gaussian_PSF_' ...
-    'MERFISH_analysis_xSigma*_ySigma*.mat']);
-POIPath = [POIDir(1).folder '\' POIDir(1).name]; % POI image data path
-lambda = 0.005; % Regularization intensity coefficient
+if retrainModel
+    disp('Training model...');
+    % Data path and POI path:
+    dataPath = '..\datasets\data_all.mat'; % Image data path
+    POIDir = dir(['..\datasets\fitted_elliptical_Gaussian_PSF_' ...
+        'MERFISH_analysis_xSigma*_ySigma*.mat']);
+    POIPath = [POIDir(1).folder '\' POIDir(1).name]; % POI image data path
+    lambda = 0.005; % Regularization intensity coefficient
 
-% Data loading parameters:
-trainIdxRange = 1 : round(trainDataSelectNum * 0.8); % Training set patch sampling range index
-valIdxRange = round(trainDataSelectNum * 0.8) + 1 : trainDataSelectNum; % Validation set patch sampling range index
+    % Data loading parameters:
+    trainIdxRange = 1 : round(trainDataSelectNum * 0.8); % Training data index range
+    valIdxRange = round(trainDataSelectNum * 0.8) + 1 : trainDataSelectNum; % Validation data index range
 
-% Model saving parameters:
-modelSavePath = savePath; % Path to save the model
+    % Model saving parameters:
+    modelSavePath = savePath; % Path to save the model
 
-% Preprocessing parameters:
-upsamplRatio = [1.5 1.5 1]; % Upsampling ratio
-interpMethod = 'spline'; % Interpolation method, options: 'spline', 'linear', 'nearest', 'cubic'
+    % Preprocessing parameters:
+    upsamplRatio = [1.5 1.5 1]; % Upsampling ratio
+    interpMethod = 'spline'; % Interpolation method, options: 'spline', 'linear', 'nearest', 'cubic'
 
-% Model structure parameters:
-encoderDepth = 2; % Depth of U-net encoder part (total depth is approximately twice this)
+    % Model structure parameters:
+    encoderDepth = 2; % Depth of U-net encoder part (total depth is approximately twice this)
 
-% U-net model training parameters:
-patchSize = [256 256]; % Patch size for sampling
-trainPatchNum = 512; % Number of patches for training set
-valPatchNum = 64; % Number of patches for validation set
-learningRate = 1e-3; % Learning rate
-minLR = 1e-4; % Lower limit for learning rate decay
-miniBatchSize = 8; % Batch size per iteration
-maxEpochs = 1000; % Maximum training epochs
-valFreq = 20; % Validation frequency (validate every valFreq batches)
-maxPatience = 50; % Early stopping patience (stops training if validation loss does not decrease for this many validations)
-learnBG = true; % Whether to learn the background
-verbose = true; % Whether to display processing images
-useGPU = true; % Whether to use GPU
+    % U-net model training parameters:
+    patchSize = [256 256]; % Patch size for sampling
+    trainPatchNum = 512; % Number of patches for training set
+    valPatchNum = 64; % Number of patches for validation set
+    learningRate = 1e-3; % Learning rate
+    minLR = 1e-4; % Lower limit for learning rate decay
+    miniBatchSize = 8; % Batch size per iteration
+    maxEpochs = 1000; % Maximum training epochs
+    valFreq = 20; % Validation frequency (validate every valFreq batches)
+    maxPatience = 50; % Early stopping patience (stops training if validation loss does not decrease for this many validations)
+    learnBG = true; % Whether to learn the background
+    verbose = true; % Whether to display processing images
+    useGPU = true; % Whether to use GPU
 
-% Bayesian estimation best threshold search parameters:
-useParallel = true; % Whether to use parallel computation
-parNum = 6; % Number of parallel pool workers
-patchNumForThreshSearch = trainPatchNum; % Number of samples for best threshold search
+    % Bayesian estimation best threshold search parameters:
+    useParallel = true; % Whether to use parallel computation
+    parNum = 6; % Number of parallel pool workers
+    patchNumForThreshSearch = trainPatchNum; % Number of samples for best threshold search
 
-DEPAFTrain(dataPath, POIPath, lambda, ...
-    'trainIdxRange', trainIdxRange, ...
-    'valIdxRange', valIdxRange, ...
-    'upsamplRatio', upsamplRatio, ...
-    'interpMethod', interpMethod, ...
-    'patchSize', patchSize, ...
-    'trainPatchNum', trainPatchNum, ...
-    'valPatchNum', valPatchNum, ...
-    'encoderDepth', encoderDepth, ...
-    'learningRate', learningRate, ...
-    'minLR', minLR, ...
-    'miniBatchSize', miniBatchSize, ...
-    'maxEpochs', maxEpochs, ...
-    'valFreq', valFreq, ...
-    'maxPatience', maxPatience, ...
-    'learnBG', learnBG, ...
-    'verbose', verbose, ...
-    'useGPU', useGPU, ...
-    'useParallel', useParallel, ...
-    'parNum', parNum, ...
-    'patchNumForThreshSearch', patchNumForThreshSearch, ...
-    'modelSavePath', modelSavePath);
-close all;
+    modelsBefore = dir(fullfile(savePath, 'Mdl_*.mat'));
+    DEPAFTrain(dataPath, POIPath, lambda, ...
+        'trainIdxRange', trainIdxRange, ...
+        'valIdxRange', valIdxRange, ...
+        'upsamplRatio', upsamplRatio, ...
+        'interpMethod', interpMethod, ...
+        'patchSize', patchSize, ...
+        'trainPatchNum', trainPatchNum, ...
+        'valPatchNum', valPatchNum, ...
+        'encoderDepth', encoderDepth, ...
+        'learningRate', learningRate, ...
+        'minLR', minLR, ...
+        'miniBatchSize', miniBatchSize, ...
+        'maxEpochs', maxEpochs, ...
+        'valFreq', valFreq, ...
+        'maxPatience', maxPatience, ...
+        'learnBG', learnBG, ...
+        'verbose', verbose, ...
+        'useGPU', useGPU, ...
+        'useParallel', useParallel, ...
+        'parNum', parNum, ...
+        'patchNumForThreshSearch', patchNumForThreshSearch, ...
+        'modelSavePath', modelSavePath);
+    close all;
+    mdlDir = dir(fullfile(savePath, 'Mdl_*.mat'));
+    mdlDir = mdlDir(~ismember({mdlDir.name}, {modelsBefore.name}));
+    assert(numel(mdlDir) == 1, 'Expected exactly one newly completed model.');
+    modelPath = fullfile(mdlDir(1).folder, mdlDir(1).name);
+end
 
 % --------------------------- Model Prediction ----------------------------
 disp('Processing image data with the model...');
 % Model path and data path:
-mdlDir = dir([savePath '\Mdl_*.mat']);
-modelPath = [mdlDir(end).folder '\' mdlDir(end).name]; % Path of prediction model
+modelInfo = load(modelPath, 'modelID');
+modelNum = modelInfo.modelID;
 dataDir = dir('..\datasets\data_bit*.mat'); % Path of prediction data
 for i = 1:length(dataDir)
     dataPath = [dataDir(i).folder '\' dataDir(i).name];
@@ -286,15 +295,14 @@ end
 % ----------------------------- Gene Decoding -----------------------------
 try
     disp('Decoding localization results into binary codes...');
-    allPredResDir = dir([savePath '\PredRes*.mat']);
-    modelNum = allPredResDir(end).name(end-17:end-4);
-    predResDir = dir([savePath '\PredRes*' modelNum '.mat']);
 
     allBitLoc = cell(bitNum, 1);
     words = cell(bitNum, 1);
     for bitIdx = 1:bitNum
         % Load data:
-        [allBitLoc{bitIdx}, widI, lenI] = loadData([predResDir(bitIdx).folder '\' predResDir(bitIdx).name]);
+        predResPath = fullfile(savePath, ...
+            ['PredRes_data_bit' num2str(bitIdx, '%02d') '_by_Mdl_' modelNum '.mat']);
+        [allBitLoc{bitIdx}, widI, lenI] = loadData(predResPath);
 
         % Get number of slices:
         sliceNum = length(allBitLoc{bitIdx});
@@ -341,15 +349,26 @@ try
         end
     end
 
+    % Preserve the z-layer identity in the same bit-then-layer order:
+    wordSliceIDs = cell(bitNum, 1);
+    for bitIdx = 1:bitNum
+        sliceIDs = cell(sliceNum, 1);
+        for sliceIdx = 1:sliceNum
+            sliceIDs{sliceIdx} = repmat(sliceIdx, size(words{bitIdx}{sliceIdx}, 1), 1);
+        end
+        wordSliceIDs{bitIdx} = vertcat(sliceIDs{:});
+    end
+    wordSliceIDs = vertcat(wordSliceIDs{:});
+
     % Convert format to final decoding result:
     words = cell2mat(cellfun(@(x) vertcat(x{:}), words, 'UniformOutput', false));
     allBitLoc = cell2mat(cellfun(@(x) vertcat(x{:}), allBitLoc, 'UniformOutput', false));
 
 catch ME
-    % Output and save error information:
+    % Report the error and stop:
     errorMsg = ME.message;
     fprintf('Error occurred: %s\n', errorMsg);
-    save([savePath, '.\EvalRes_Mdl_' modelNum '.mat'], 'ME', 'errorMsg');
+    rethrow(ME);
 end
 
 % --------------------------- Result Evaluation ---------------------------
@@ -397,6 +416,7 @@ correctionRate = sum(correctionFlag) / length(correctionFlag);
 % Calculate per-bit correction rate:
 words = words(minVal <= 1, :);
 GTWords = GTWords(minVal <= 1, :);
+wordSliceIDs = wordSliceIDs(minVal <= 1);
 perBitCorrectionRate = sum(words ~= GTWords) ./ size(words, 1);
 
 % Calculate 0-to-1 and 1-to-0 correction rates per bit:
@@ -406,6 +426,25 @@ zeroTotal = sum(GTWords == 0);
 oneTotal = sum(GTWords == 1);
 zeroToOneErrRate = zeroToOneErrs ./ zeroTotal;
 oneToZeroErrRate = oneToZeroErrs ./ oneTotal;
+
+% Additional layer-level results: rows are z-layers, columns are encoding bits.
+layerIDs = (1:sliceNum)';
+layerZeroToOneErrs = zeros(sliceNum, bitNum);
+layerOneToZeroErrs = zeros(sliceNum, bitNum);
+layerZeroTotal = zeros(sliceNum, bitNum);
+layerOneTotal = zeros(sliceNum, bitNum);
+for sliceIdx = 1:sliceNum
+    inSlice = wordSliceIDs == sliceIdx;
+    layerWords = words(inSlice, :);
+    layerGTWords = GTWords(inSlice, :);
+    layerZeroToOneErrs(sliceIdx, :) = sum((layerGTWords == 0) & (layerWords == 1));
+    layerOneToZeroErrs(sliceIdx, :) = sum((layerGTWords == 1) & (layerWords == 0));
+    layerZeroTotal(sliceIdx, :) = sum(layerGTWords == 0);
+    layerOneTotal(sliceIdx, :) = sum(layerGTWords == 1);
+end
+layerZeroToOneErrRate = layerZeroToOneErrs ./ layerZeroTotal;
+layerOneToZeroErrRate = layerOneToZeroErrs ./ layerOneTotal;
+
 
 % Generate perfect decoding result:
 perfectDecodeRes = decodeRes(~[decodeRes.Correction]);
@@ -437,4 +476,6 @@ save([savePath, '\EvalRes_Mdl_' modelNum '.mat'], ...
     'correctionRate', 'perBitCorrectionRate', ...
     'zeroToOneErrRate', 'oneToZeroErrRate', ...
     'FPKMCorr', 'p', 'perfectFPKMCorr', 'perfectp', ...
-    'decodedGeneNum', 'perfectDecodedGeneNum', 'FPKM', 'matchThresh');
+    'decodedGeneNum', 'perfectDecodedGeneNum', 'FPKM', 'matchThresh', ...
+    'layerIDs', 'layerZeroToOneErrs', 'layerOneToZeroErrs', ...
+    'layerZeroTotal', 'layerOneTotal', 'layerZeroToOneErrRate', 'layerOneToZeroErrRate');

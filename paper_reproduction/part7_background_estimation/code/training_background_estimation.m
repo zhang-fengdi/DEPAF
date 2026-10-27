@@ -19,8 +19,8 @@ for scale = [5 6.4 9 13.9 19.3] % Train on datasets with different background va
         lambda = LUT(i,3); % Regularization strength coefficient
 
         % Data loading parameters:
-        trainIdxRange = 1:78; % Range of Patch indices for training set
-        valIdxRange = 79:80; % Range of Patch indices for validation set
+        trainIdxRange = 1:78; % Training data index range
+        valIdxRange = 79:80; % Validation data index range
 
         % Model saving parameters:
         modelSavePath = '..\models\'; % Path to save model
@@ -41,7 +41,7 @@ for scale = [5 6.4 9 13.9 19.3] % Train on datasets with different background va
         miniBatchSize = 8; % Batch size for each iteration
         maxEpochs = 1000; % Maximum number of training epochs
         valFreq = 20; % Validation frequency (validation occurs every valFreq batches)
-        maxPatience = 50; % Early stopping patience (training stops if validation loss does not decrease after this many epochs)
+        maxPatience = 50; % Early stopping patience (training stops if validation loss does not decrease after this many validation checks)
         learnBG = true; % Whether to learn background
         verbose = true; % Display processing as images
         useGPU = true; % Use GPU for training

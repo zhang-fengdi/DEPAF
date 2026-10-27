@@ -1,6 +1,6 @@
 # Paper Reproduction
 
-To reproduce the paper results, follow these steps:
+To reproduce the paper results, use MATLAB R2024b and follow these steps:
 
 1. **Download datasets and models**:
 
@@ -63,19 +63,19 @@ To reproduce the paper results, follow these steps:
 
       <sup>a</sup> The dataset for **3D SMLM benchmarking** can also be downloaded from [here](https://srm.epfl.ch/srm/dataset/challenge-3D-simulation/index.html).
 
-      <sup>b</sup> The dataset for **fetal liver MERFISH analysis** is available upon request from the authors of ref. [[1]](#references).
+      <sup>b</sup> The codebook and PSF are available [here](https://zenodo.org/records/20093813/files/part4_MERFISH_analysis_fetal_liver_datasets.zip?download=1). Raw images are available upon request from the authors of ref. [[1]](#references).
 
       <sup>c</sup> The dataset for **mouse colon MERFISH analysis** can also be downloaded from [here](https://datadryad.org/dataset/doi:10.5061/dryad.p8cz8wb1m).
 
       <sup>d</sup> The dataset *CaImAn Video J123* for **2PCI processing** can also be downloaded from [here](https://zenodo.org/records/1659149).
 
 2. **Organize downloaded data**:
-   - Place the downloaded datasets into the corresponding subfolders within the `datasets` directory.
-   - Place the downloaded models into the corresponding subfolders within the `models` directory.
+   - Extract each ZIP into its corresponding part directory. The archives already contain `datasets/` or `models/`; do not add a second directory of the same name.
+   - For MERFISH, extract into `part4_MERFISH_analysis/fetal_liver/` or `part4_MERFISH_analysis/mouse_colon/`, respectively. Place the fetal liver DAX/INF files in `fetal_liver/datasets/sequential/`.
 
 3. **Run reproduction code**:
    - Run MATLAB, open the subfolder corresponding to the desired part to reproduce, and navigate to the `code` directory.
-   - Execute the reproduction scripts.
+   - Run the prediction and evaluation scripts using the supplied models. Training scripts are optional.
 
    **Note**: To ensure precise reproduction of the paper's results, it is recommended to use the downloaded models directly for prediction and subsequent processing. Re-training the models may lead to results that differ from those reported in the paper.
 

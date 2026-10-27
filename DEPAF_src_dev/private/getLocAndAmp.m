@@ -17,7 +17,7 @@ function [loc, amplitude] = getLocAndAmp(I, IFit, IDenoised, ...
 %    amplitude - Corresponding amplitude of each POI.
 
 % Extract and normalize the noise map:
-INoise = I - IDenoised;
+INoise = I - sum(IDenoised, 3);
 INoise = INoise ./ max(POI, [], 'all');
 clear I IDenoised;
 

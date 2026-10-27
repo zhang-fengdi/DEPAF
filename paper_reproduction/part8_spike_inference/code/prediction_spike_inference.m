@@ -12,7 +12,7 @@ for SNR = {'Low', 'Medium', 'High'}
             dataPath = ['..\datasets\data_rate_' num2str(rate) '_' SNR{1} '_SNR_only_I.mat']; % Path of the prediction data
 
             batchSize = 1000; % Batch size for single prediction
-            patchSize = [1024 1]; % Patch size for block prediction (must be a power of 2)
+            patchSize = [1024 1]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
             patchStride = [512 1]; % Stride for block prediction
             resSavePath = '..\models\'; % Path to save prediction results
             outputISyn = false; % Whether to predict and output noiseless synthetic images

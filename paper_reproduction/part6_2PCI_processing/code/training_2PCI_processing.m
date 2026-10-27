@@ -39,9 +39,15 @@ select2DNum = 1000; % Number of 2D samples to collect
 [~, trainDataName] = fileparts(trainDataPath);
 
 % Check if preprocessed files already exist; if not, perform data loading and preprocessing:
-if ~exist(['..\datasets\' trainDataName '_I1D.mat'], 'file') || ...
-        ~exist(['..\datasets\' trainDataName '_I1DSampled.mat'], 'file') || ...
-        ~exist('..\datasets\fitted_spike_signal_2PCI_processing.mat', 'file')
+cacheFiles = {['..\datasets\' trainDataName '_I1D.mat'], ...
+    ['..\datasets\' trainDataName '_I1DSampled.mat'], ...
+    '..\datasets\fitted_spike_signal_2PCI_processing.mat'};
+cacheExists = isfile(cacheFiles);
+if any(cacheExists) && ~all(cacheExists)
+    error('DEPAF:PartialPreprocessingCache', ...
+        'Preprocessing files are incomplete. Use a fresh datasets directory or restore the complete cache.');
+end
+if ~all(cacheExists)
     disp('Data preprocessing...');
 
     % Load data from training data path:
@@ -133,8 +139,8 @@ dataPath = ['..\datasets\' trainDataName '_I1DSampled.mat']; % Image data path
 POIPath = '..\datasets\fitted_spike_signal_2PCI_processing.mat'; % POI image data path
 
 % Data loading related parameters:
-trainIdxRange = 1 : select1DNum*0.8; % Training patch range
-valIdxRange = select1DNum*0.8+1 : select1DNum; % Validation patch range
+trainIdxRange = 1 : select1DNum*0.8; % Training data index range
+valIdxRange = select1DNum*0.8+1 : select1DNum; % Validation data index range
 
 % Model saving related parameters:
 modelSavePath = [saveFolderName '_1D']; % Path to save model
@@ -155,7 +161,7 @@ minLR = 1e-4; % Lower bound for learning rate decay
 miniBatchSize = 8; % Batch size per iteration
 maxEpochs = 1000; % Maximum training epochs
 valFreq = 20; % Validation frequency (validate once every valFreq batches)
-maxPatience = 50; % Early stopping patience (stop training if validation loss doesn't decrease for this many steps)
+maxPatience = 50; % Early stopping patience (stop training if validation loss doesn't decrease for this many validation checks)
 learnBG = true; % Whether to learn background
 verbose = true; % Whether to display process images
 useGPU = true; % Whether to use GPU
@@ -165,6 +171,7 @@ useParallel = true; % Whether to use parallel computing
 parNum = totalParNum; % Number of parallel pools
 patchNumForThreshSearch = trainPatchNum; % Number of samples for best threshold search
 
+modelsBefore = dir([modelSavePath '\Mdl_*.mat']);
 DEPAFTrain(dataPath, POIPath, lambda1D, ...
     'trainIdxRange', trainIdxRange, ...
     'valIdxRange', valIdxRange, ...
@@ -192,12 +199,16 @@ DEPAFTrain(dataPath, POIPath, lambda1D, ...
 disp('Processing all 1D samples with model...');
 % Model path and data path:
 mdlDir = dir([saveFolderName '_1D\Mdl_*.mat']);
-modelPath = [mdlDir(end).folder '\' mdlDir(end).name]; % Prediction model path
+mdlDir = mdlDir(~ismember({mdlDir.name}, {modelsBefore.name}));
+assert(numel(mdlDir) == 1, 'Expected exactly one newly completed 1D model.');
+modelPath = fullfile(mdlDir(1).folder, mdlDir(1).name);
+modelInfo = load(modelPath, 'modelID');
+model1DID = modelInfo.modelID;
 dataPath = ['..\datasets\' trainDataName '_I1D.mat']; % Prediction data path
 
 % Other parameter settings:
 batchSize = 1024; % Batch size for single prediction
-patchSize = [win 1]; % Patch size for prediction (must be a power of 2)
+patchSize = [win 1]; % Patch size for prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
 patchStride = [round(win/2) 1]; % Stride for patch-based prediction
 resSavePath = [saveFolderName '_1D']; % Path to save prediction results
 outputISyn = true; % Predict and output model-synthesized images
@@ -216,11 +227,8 @@ close all;
 
 % -------------------------- 1D to 2D Conversion --------------------------
 disp('Converting 1D sample prediction results to 2D format...');
-% Retrieve all files matching the pattern in the save path:
-ISynDir = dir([saveFolderName '_1D\ISyn_*.mat']);
-
-% Load data from the last matching file:
-ISyn = loadData([ISynDir(end).folder '\' ISynDir(end).name]);
+ISynName = ['ISyn_' trainDataName '_I1D_by_Mdl_' model1DID '.mat'];
+ISyn = loadData([saveFolderName '_1D\' ISynName]);
 
 % Initialize a 3D array to store the converted 2D ISyn:
 ISyn2D = zeros(widI, lenI, numI, 'single');
@@ -240,7 +248,7 @@ end
 checkPath([saveFolderName '_2D']);
 
 % Save 2D data:
-save([saveFolderName '_2D\ISyn2D_' ISynDir(end).name(6:end)], 'ISyn2D', '-v7.3');
+save([saveFolderName '_2D\ISyn2D_' ISynName(6:end)], 'ISyn2D', '-v7.3');
 clear ISyn
 
 % -------------------------- 2D Sample Selection --------------------------
@@ -251,19 +259,18 @@ selectedTimeIdx = sortedIdx(1:select2DNum);
 ISyn2DSampled = ISyn2D(:,:,selectedTimeIdx);
 
 % Save samples:
-save([saveFolderName '_2D\ISyn2DSampled_' ISynDir(end).name(6:end)], 'ISyn2DSampled', '-v7.3');
+save([saveFolderName '_2D\ISyn2DSampled_' ISynName(6:end)], 'ISyn2DSampled', '-v7.3');
 clear ISyn2D ISyn2DSampled
 
 % --------------------------- 2D Model Training ---------------------------
 disp('Training model with sampled 2D samples...');
 % Data path and POI path:
-dataDir = dir([saveFolderName '_2D\ISyn2DSampled_*.mat']);
-dataPath = [dataDir(end).folder '\' dataDir(end).name];% Image data path
+dataPath = [saveFolderName '_2D\ISyn2DSampled_' ISynName(6:end)]; % Image data path
 POIPath = '..\datasets\standard_Gaussian_PSF_2PCI_processing.mat'; % POI image data path
 
 % Data loading related parameters:
-trainIdxRange = 1 : select2DNum*0.8; % Training patch range
-valIdxRange = select2DNum*0.8+1 : select2DNum; % Validation patch range
+trainIdxRange = 1 : select2DNum*0.8; % Training data index range
+valIdxRange = select2DNum*0.8+1 : select2DNum; % Validation data index range
 
 % Model saving related parameters:
 modelSavePath = [saveFolderName '_2D']; % Path to save model
@@ -284,7 +291,7 @@ minLR = 1e-4; % Lower bound for learning rate decay
 miniBatchSize = 8; % Batch size per iteration
 maxEpochs = 1000; % Maximum training epochs
 valFreq = 20; % Validation frequency (validate once every valFreq batches)
-maxPatience = 50; % Early stopping patience (stop training if validation loss doesn't decrease for this many steps)
+maxPatience = 50; % Early stopping patience (stop training if validation loss doesn't decrease for this many validation checks)
 learnBG = true; % Whether to learn background
 verbose = true; % Whether to display process images
 useGPU = true; % Whether to use GPU
@@ -294,6 +301,7 @@ useParallel = true; % Whether to use parallel computing
 parNum = totalParNum; % Number of parallel pools
 patchNumForThreshSearch = trainPatchNum; % Number of samples for best threshold search
 
+modelsBefore = dir([modelSavePath '\Mdl_*.mat']);
 DEPAFTrain(dataPath, POIPath, lambda2D, ...
     'trainIdxRange', trainIdxRange, ...
     'valIdxRange', valIdxRange, ...
@@ -321,9 +329,12 @@ DEPAFTrain(dataPath, POIPath, lambda2D, ...
 disp('Processing all 2D samples with model...');
 % Model path and data path:
 mdlDir = dir([saveFolderName '_2D\Mdl_*.mat']);
-modelPath = [mdlDir(end).folder '\' mdlDir(end).name]; % Prediction model path
-dataDir = dir([saveFolderName '_2D\ISyn2D_*.mat']); % Prediction data path
-dataPath = [dataDir(end).folder '\' dataDir(end).name];
+mdlDir = mdlDir(~ismember({mdlDir.name}, {modelsBefore.name}));
+assert(numel(mdlDir) == 1, 'Expected exactly one newly completed 2D model.');
+modelPath = fullfile(mdlDir(1).folder, mdlDir(1).name);
+modelInfo = load(modelPath, 'modelID');
+model2DID = modelInfo.modelID;
+dataPath = [saveFolderName '_2D\ISyn2D_' ISynName(6:end)]; % Prediction data path
 
 % Other parameters:
 batchSize = 256; % Batch size for single prediction
@@ -353,8 +364,9 @@ end
 
 % Load data:
 GTMasks = loadData(GTMaskPath);
-predResDir = dir([saveFolderName '_2D\PredRes*.mat']);
-loc = loadData([predResDir(end).folder '\' predResDir(end).name]);
+[~, predictionDataName] = fileparts(dataPath);
+predResName = ['PredRes_' predictionDataName '_by_Mdl_' model2DID '.mat'];
+loc = loadData([saveFolderName '_2D\' predResName]);
 
 % Define parameter range for Bayesian optimization:
 optimVars = [
@@ -380,7 +392,7 @@ try
     results = bayesopt(objFcn, optimVars, ...
         'AcquisitionFunctionName', 'expected-improvement', ...
         'IsObjectiveDeterministic', true, ...
-        'UseParallel', true, ...
+        'UseParallel', useParallel, ...
         'MaxObjectiveEvaluations', 500);
 
     % Retrieve best parameters:
@@ -401,14 +413,14 @@ try
 
     % Save best result:
     varOrder = {'bestParams', 'bestF1', 'bestmIoU', 'bestMasks'};
-    save([saveFolderName '_2D\PostprocParams_' predResDir(end).name], ...
+    save([saveFolderName '_2D\PostprocParams_' predResName], ...
         'bestParams', 'bestF1', 'bestmIoU', 'bestMasks', 'varOrder');
 
 catch ME
-    % Output and save error message:
+    % Report the error and stop:
     errorMsg = ME.message;
     fprintf('Error during Bayesian optimization: %s\n', errorMsg);
-    save([saveFolderName '_2D\PostprocParams_' predResDir(end).name], 'ME', 'errorMsg');
+    rethrow(ME);
 end
 
 % Close all windows:

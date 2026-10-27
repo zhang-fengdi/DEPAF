@@ -81,10 +81,10 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
 
 ### Recommended environment
 
-- **MATLAB:** Version 2022a or newer
+- **MATLAB:** R2024b
 - **Operating System:** Windows 10 or 11
 - **Memory:** 32 GB RAM (additional memory may be required for large datasets or complex tasks)
-- **GPU:** NVIDIA GPU with CUDA compatibility (recommended for accelerated processing)
+- **GPU:** NVIDIA GPU supported by MATLAB. `useGPU` defaults to `true`; set it to `false` for CPU execution.
 
 ### Installation
 
@@ -102,7 +102,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     addpath(genpath('DEPAF_src_dev'));
     ```
 
-4. Use the example below to train a model (install any required MATLAB toolboxes according to runtime prompts):
+4. Use the example below to train a model:
 
     ```matlab
     % Parameters:
@@ -113,7 +113,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     DEPAFTrain(dataPath, POIPath, lambda);
     ```
 
-    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. The recommended `lambda` range is `1e-1` to `1e-4`. Use *coarse-to-fine log-scale grid search* with visual or quantitative evaluation to select the best value. You can also check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing. Across the evaluated tasks, DEPAF training time ranged from 37.1 min to 23.4 h on an NVIDIA RTX 3090 GPU, depending on task complexity.
+    **Note:** `lambda` controls the signal detection sensitivity and requires tuning depending on your specific task. A higher `lambda` value makes signal detection stricter, increasing noise resistance but potentially losing signal, while a lower value may retain more signal but be less resistant to noise. The recommended `lambda` range is `1e-1` to `1e-4`. Use *coarse-to-fine log-scale grid search* with visual or quantitative evaluation to select the best value. You can also check the parameter settings in [paper_reproduction](https://github.com/zhang-fengdi/DEPAF/tree/main/paper_reproduction) for reference. `dataPath` and `POIPath` must refer to a `.mat`, `.tif` or `.tiff` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions of “image height × image width × number of images” to ensure proper data loading and processing. Across the evaluated tasks, DEPAF training time ranged from 37.1 min to 23.4 h on an NVIDIA RTX 3090 GPU, depending on task complexity.
    
     To further customize the training process, see the full version below:
 
@@ -127,8 +127,8 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
 
     % Optional Parameters:
     % Data loading related parameters:
-    trainIdxRange = 1:8; % Training set patch sampling index range
-    valIdxRange = 9:10; % Validation set patch sampling index range
+    trainIdxRange = 1:8; % Training data index range
+    valIdxRange = 9:10; % Validation data index range
 
     % Model saving related parameters:
     modelSavePath = '.\'; % Path to save the model
@@ -149,7 +149,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     miniBatchSize = 8; % Batch size per iteration
     maxEpochs = 1000; % Maximum number of training epochs
     valFreq = 20; % Validation frequency (validate every valFreq batches)
-    maxPatience = 20; % Early stopping patience (stop training if validation loss does not decrease for this many epochs)
+    maxPatience = 20; % Early stopping patience (stop training if validation loss does not decrease for this many validation checks)
     learnBG = true; % Whether to learn background
     verbose = true; % Display processing as images
     useGPU = true; % Use GPU
@@ -185,14 +185,14 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     
     </details>
 
-6. After training the model, perform predictions using the example below (install any required MATLAB toolboxes according to runtime prompts):
+6. After training the model, perform predictions using the example below:
 
     ```matlab
     % Parameters:
     modelPath = ''; % Path to prediction model
     dataPath = ''; % Path to prediction data
     batchSize = 64; % Batch size for a single prediction
-    patchSize = [64 64]; % Patch size for prediction (must be a power of 2)
+    patchSize = [64 64]; % Patch size for prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
     patchStride = [32 32]; % Patch stride for prediction
     resSavePath = '.\'; % Path to save prediction results
     outputISyn = false; % Output noiseless synthetic images
@@ -209,14 +209,14 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
         'useGPU', useGPU);
     ```
 
-    **Note:** `dataPath` and `POIPath` must refer to either a `.mat` or `.tif` image file. If a `.mat` file is provided, it must contain a single matrix variable with dimensions formatted as “image height × image width × number of images” to ensure proper data loading and processing.
+    **Note:** `modelPath` must refer to a saved DEPAF `.mat` model; `dataPath` must refer to a `.mat`, `.tif` or `.tiff` image file. A `.mat` data file must contain a single matrix variable with dimensions “image height × image width × number of images”.
 
 ### About `DEPAF_src_dev` and `paper_reproduction/DEPAF_src_replication`
 
 This repository contains two versions of the DEPAF source code:
 
-* **`DEPAF_src_dev`**: This is the **latest development version** of DEPAF. It includes additional features, extended parameter options, and the most up-to-date model architecture. It is recommended for custom applications, adapting to new tasks, and exploring advanced usage.
-* **`paper_reproduction/DEPAF_src_replication`**: This is the **frozen version** used to generate all results in the original DEPAF paper. It ensures **exact reproducibility** of the published experiments and evaluation metrics. For strict replication of the paper results, please use this version.
+* **`DEPAF_src_dev`**: The development version, recommended for custom applications and new tasks.
+* **`paper_reproduction/DEPAF_src_replication`**: The implementation for reproducing the paper results with the supplied models and experiment scripts. See [paper_reproduction](paper_reproduction) for the reproduction workflow.
 
 ## License
 

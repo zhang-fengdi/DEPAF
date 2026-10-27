@@ -13,7 +13,13 @@ for int = [1000 7000 40000]
         gtPath = ['..\datasets\' gtDataName];
         gtData = load(gtPath);
 
-        predResDir = dir(['..\models\BG_data_' num2str(int) '_' num2str(density) '_PerlinBG_' num2str(scale) '*.mat' ]);
+        modelDataName = ['data_' num2str(int) '_' num2str(density) ...
+            '_PerlinBG_' num2str(scale) '_onlyI'];
+        mdlDir = dir(['..\models\Mdl_*_by_' modelDataName '.mat']);
+        assert(numel(mdlDir) == 1, 'Expected one model for the selected intensity and background scale.');
+        modelInfo = load(fullfile(mdlDir(1).folder, mdlDir(1).name), 'modelID');
+        predResDir = dir(['..\models\BG_' modelDataName '_by_Mdl_' modelInfo.modelID '.mat']);
+        assert(numel(predResDir) == 1, 'The background result for the selected model is missing.');
         for i = 1:length(predResDir)
 
             % Load prediction results:

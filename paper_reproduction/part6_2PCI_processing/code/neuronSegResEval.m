@@ -27,7 +27,7 @@ for i = 1:numGT
         costmatrix(i,j) = 1 - IoUs(i,j);
     end
 end
-costmatrix(costmatrix > matchThresh) = 2;
+costmatrix(costmatrix > 1-matchThresh) = 2;
 
 % Use Hungarian algorithm for mask matching:
 % Note: Official documentation specifies that costOfNonAssignment is set to half the 

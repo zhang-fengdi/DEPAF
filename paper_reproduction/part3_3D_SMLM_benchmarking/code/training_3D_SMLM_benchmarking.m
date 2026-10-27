@@ -10,8 +10,8 @@ POIPath = '..\datasets\calibrated_double_helix_PSFs_3D_SMLM_benchmarking.mat'; %
 lambda = 0.021; % Regularization intensity coefficient
 
 % Data loading parameters:
-trainIdxRange = 1:2500; % Training set patch sampling range index
-valIdxRange = 1:2500; % Validation set patch sampling range index
+trainIdxRange = 1:2500; % Training data index range
+valIdxRange = 1:2500; % Validation data index range
 
 % Model saving parameters:
 modelSavePath = '..\models\'; % Path to save the model

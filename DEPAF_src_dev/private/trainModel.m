@@ -26,7 +26,8 @@ function [bestdlnet, epoch, minValLoss, bestEpoch] = trainModel( ...
 %
 %  Output Parameters:
 %    bestdlnet - Best deep learning network after training.
-%    epoch - Epoch at which the best network was achieved.
+%    epoch - Final training epoch.
+%    bestEpoch - Epoch at which the best validation loss was achieved.
 %    minValLoss - Minimum validation loss during training.
 
 % Get number of channels:
@@ -166,7 +167,7 @@ for epoch = 1:maxEpochs
                 return;
             end
 
-            % Take action when patience reaches half of maxPatience:
+            % Take action when patience reaches maxPatience:
             if patience == maxPatience && learningRate > minLR
 
                 % Reset patience:

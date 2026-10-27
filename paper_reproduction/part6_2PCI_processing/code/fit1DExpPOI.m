@@ -14,6 +14,8 @@ function POI = fit1DExpPOI(I, fitPtsNum, tol)
 [xMaxIdx, yMaxIdx, zMaxIdx] = ind2sub(size(I), maxIdx);
 
 % Disable warnings:
+warningState = warning('query', 'signal:findpeaks:largeMinPeakHeight');
+warningCleanup = onCleanup(@() warning(warningState));
 warning('off', 'signal:findpeaks:largeMinPeakHeight');
 
 % Initialize fitting parameters:

@@ -7,13 +7,15 @@ addpath(genpath('..\..\DEPAF_src_replication'));
 density = 3775;
 for int = [1000 7000 40000]
     for scale = [5 6.4 9 13.9 19.3]
-        mdlDir = dir(['..\models\Mdl*' num2str(int) '_' num2str(density) '*' num2str(scale) '*.mat']);
+        mdlDir = dir(['..\models\Mdl_*_by_data_' num2str(int) '_' ...
+            num2str(density) '_PerlinBG_' num2str(scale) '_onlyI.mat']);
+        assert(numel(mdlDir) == 1, 'Expected one model for the selected intensity and background scale.');
         for i = 1:length(mdlDir)
             modelPath = [mdlDir(i).folder '\' mdlDir(i).name]; % Prediction model path
             dataPath = ['..\datasets\data_' num2str(int) '_' num2str(density) '_PerlinBG_' num2str(scale) '_onlyI.mat']; % Prediction data path
 
             batchSize = 80; % Batch size for single prediction
-            patchSize = [256 256]; % Patch size for block prediction (must be a power of 2)
+            patchSize = [256 256]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
             patchStride = [128 128]; % Stride for block prediction
             resSavePath = '..\models\'; % Path to save prediction results
             outputISyn = false; % Output model-synthesized images

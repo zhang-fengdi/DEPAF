@@ -226,6 +226,23 @@ addParameter(params, 'useGPU', true, validBool);
 % Parse and validate optional parameters:
 parse(params, varargin{:});
 
+% Resolve omitted defaults from the final patch size and network depth:
+defaultOverrides = {};
+resolvedPatchSize = params.Results.patchSize;
+if ismember('patchSize', params.UsingDefaults)
+    patchStep = 2^encoderDepth;
+    nonSingleton = resolvedPatchSize ~= 1;
+    resolvedPatchSize(nonSingleton) = max(patchStep, ...
+        patchStep * floor(resolvedPatchSize(nonSingleton)/patchStep));
+    defaultOverrides = {'patchSize', resolvedPatchSize};
+end
+if ismember('patchStride', params.UsingDefaults)
+    defaultOverrides = [defaultOverrides, {'patchStride', ceil(resolvedPatchSize/2)}];
+end
+if ~isempty(defaultOverrides)
+    parse(params, varargin{:}, defaultOverrides{:});
+end
+
 % Complex validation for optional parameter patchSize:
 if params.Results.patchSize(1) > ceil(widI * upsamplRatio(1))
     error('''patchSize'' exceeds image dimensions along y-axis after upsampling, should be <= %d.', ceil(widI * upsamplRatio(1)));

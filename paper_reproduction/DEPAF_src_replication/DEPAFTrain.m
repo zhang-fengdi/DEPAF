@@ -7,8 +7,8 @@ function DEPAFTrain(varargin)
 %
 %  Input Parameters:
 %    dataPath - Path containing training data.
-%    lambda - Regularization coefficient.
 %    POIPath - Path containing POI sample.
+%    lambda - Regularization coefficient.
 %    Other custom parameters, including training and validation index ranges, upsampling ratios,
 %    patch size, number of training and validation patches, encoder depth, etc.
 %
@@ -137,8 +137,9 @@ disp('[Training] Saving model...');
 checkPath(modelSavePath); % Check path
 [~, dataName, dataExt] = fileparts(dataPath); % Get data file name
 modelID = char(datetime('now','Format','MM-dd-HH-mm-ss')); % Model ID
-savePath = [modelSavePath '\Mdl_' modelID '_by_' dataName '.mat'];
-assertNewOutputFiles({savePath});
+finalSavePath = [modelSavePath '\Mdl_' modelID '_by_' dataName '.mat'];
+savePath = [modelSavePath '\Incomplete_' modelID '_by_' dataName '.mat'];
+assertNewOutputFiles({savePath, finalSavePath});
 save(savePath, 'dlnet', 'finalEpoch', 'minValLoss', 'bestEpoch');
 
 % Randomly select samples for optimal segmentation threshold search (using all samples may cause memory overflow):
@@ -275,11 +276,14 @@ save(savePath, ...
     'learnBG', 'lambda', 'userSetParams', 'amplitudeDistMdl', ...
     'BOLoss', 'BOThreshList', ...
     '-append');
+assertNewOutputFiles({finalSavePath});
+movefile(savePath, finalSavePath);
 end
 
 
 % Helper function 1: Random sampling to maximize data utilization.
 function sampledIdx = iSampleSequence(dataIdx, sampleSize)
+dataIdx = dataIdx(:)';
 % Calculate basic sampling count:
 basicSamplesPerElement = floor(sampleSize / length(dataIdx));
 
@@ -379,6 +383,15 @@ addParameter(params, 'patchNumForThreshSearch', 512, validPosInt);
 
 % Parse and validate optional parameters:
 parse(params, varargin{:});
+
+% Resolve the default patch size using the requested network depth:
+if ismember('patchSize', params.UsingDefaults)
+    patchStep = 2^params.Results.encoderDepth;
+    nonSingleton = patchSizeDefault ~= 1;
+    patchSizeDefault(nonSingleton) = max(patchStep, ...
+        patchStep * floor(patchSizeDefault(nonSingleton)/patchStep));
+    parse(params, varargin{:}, 'patchSize', patchSizeDefault);
+end
 
 % Reject inputs that cannot produce training and validation batches:
 if isempty(params.Results.trainIdxRange) || isempty(params.Results.valIdxRange)

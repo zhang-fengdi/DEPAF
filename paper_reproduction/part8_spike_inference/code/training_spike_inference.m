@@ -12,8 +12,8 @@ for SNR = {'Low', 'Medium', 'High'}
         lambda = lookupLambda(SNR, rate); % Regularization intensity coefficient
 
         % Data loading parameters:
-        trainIdxRange = 1 : 1600; % Training set patch sampling range index
-        valIdxRange = 1601 : 2000; % Validation set patch sampling range index
+        trainIdxRange = 1 : 1600; % Training data index range
+        valIdxRange = 1601 : 2000; % Validation data index range
 
         % Model saving parameters:
         modelSavePath = '..\models\'; % Path to save model

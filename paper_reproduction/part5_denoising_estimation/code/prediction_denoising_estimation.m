@@ -13,13 +13,14 @@ for i = 1:size(LUT,1)
     density = LUT(i,1); % Retrieve PSF density for the training set
     int = LUT(i,2); % Retrieve PSF intensity for the training set
     dataDir = dir(['..\datasets\' num2str(density) '_SNR_' num2str(int) '*_X1_onlyI.mat']);
-    dataPath = ['..\datasets\' dataDir(1).name]; % Image data path
-    mdlDir = dir(['..\models\Mdl_*' num2str(density) '_SNR_' num2str(int) '*.mat']);
+    assert(numel(dataDir) == 1, 'Expected one dataset for the selected density and SNR.');
+    dataPath = fullfile(dataDir(1).folder, dataDir(1).name); % Image data path
+    mdlDir = dir(['..\models\Mdl_*_by_' dataDir(1).name]);
     for j = 1:length(mdlDir)
         modelPath = [mdlDir(j).folder '\' mdlDir(j).name]; % Prediction model path
 
         batchSize = 80; % Batch size per prediction
-        patchSize = [256 256]; % Patch size for block prediction (must be a power of 2)
+        patchSize = [256 256]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
         patchStride = [128 128]; % Stride for block prediction
         resSavePath = '..\models\'; % Path to save prediction results
         outputISyn = true; % Whether to predict and output noiseless synthetic images
