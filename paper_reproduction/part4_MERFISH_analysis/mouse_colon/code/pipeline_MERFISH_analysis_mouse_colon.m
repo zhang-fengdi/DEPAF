@@ -1,176 +1,179 @@
-clear all;
-close all;
+clear mouseColonGpuCleanup mouseColonSessionCleanup;
 
 % -------------------------- Parameter Settings ---------------------------
-fovId = 173; % Default mouse colon FOV bundled with this reproduction folder
-savePath = '..\models\'; % Path to save models and generated prediction/evaluation results
-trainDataSelectNum = 210; % Number of training images randomly selected from the dataset
-dataOrgPath = '..\datasets\settings\data_organization.csv';
-codebookCsvPath = '..\datasets\settings\Fibl2v1E1_codebook.csv';
-fpkmMatbPath = '..\datasets\settings\FPKM.matb';
-colorTransformPath = '..\datasets\settings\Transforms.matb';
-filePath = '..\datasets\raw\'; % Path of raw mouse colon TIFF files
-datasetRoot = '..\datasets\processed\'; % Generated DEPAF input files
-cameraOrientation = [0 0 1]; % Match the conventional MERFISH decoder orientation
+codeDir = fileparts(mfilename('fullpath'));
+partRoot = fileparts(codeDir);
+retrainModel = false; % Use the supplied model unless training is requested
+datasetRoot = fullfile(partRoot, 'datasets');
+modelPath = fullfile(partRoot, 'models', 'Mdl_04-27-15-58-00_by_data_all.mat');
+outputRoot = fullfile(partRoot, 'results');
+preparedDataRoot = ''; % Optional directory of previously prepared bit images
+useGPU = []; % Empty values retain the supplied model's settings
+useParallel = [];
+trainingOptions = struct(); % Optional overrides of the saved training settings
+seed = 173004;
 
-% --------------------------- Data Organization ---------------------------
-% Load DEPAF source code:
-addpath(genpath('..\..\..\DEPAF_src_replication'));
-addpath(pwd, '-begin');
-
-% Check if required raw data and setting files exist:
-ensureDirectory(datasetRoot);
-ensureDirectory(savePath);
-requireDirectory(filePath);
-requireFile(dataOrgPath);
-requireFile(codebookCsvPath);
-requireFile(fpkmMatbPath);
-requireFile(colorTransformPath);
-
-colorTransforms = LoadByteStreamLocal(colorTransformPath);
-bitInfo = loadMouseColonBitInfo(dataOrgPath);
-bitNum = numel(bitInfo);
-sliceNum = numel(bitInfo(1).signalFrames);
-[widI, lenI] = getMouseColonImageSize(filePath, fovId, bitInfo(1));
-
-% Check if data files exist to determine whether data organization is needed:
-dataAllPath = fullfile(datasetRoot, 'data_all.mat');
-bitDataPaths = cell(bitNum, 1);
-for bitIdx = 1:bitNum
-    bitDataPaths{bitIdx} = fullfile(datasetRoot, sprintf('data_bit%02d.mat', bitIdx));
-end
-
-datasetInfoPath = fullfile(datasetRoot, 'dataset_info.mat');
-bitManifestPath = fullfile(datasetRoot, 'bit_manifest.csv');
-
-dataFilesMissing = exist(dataAllPath, 'file') ~= 2;
-for bitIdx = 1:bitNum
-    if exist(bitDataPaths{bitIdx}, 'file') ~= 2
-        dataFilesMissing = true;
-        break;
-    end
-end
-
-if dataFilesMissing
-    disp('Organizing and generating mouse colon image data...');
-    [selectedTrainingIndices, referenceBitIndex] = prepareMouseColonDatasets( ...
-        filePath, fovId, bitInfo, widI, lenI, ...
-        trainDataSelectNum, colorTransforms, cameraOrientation, ...
-        dataAllPath, bitDataPaths);
-
-    bitManifest = buildBitManifestTable(bitInfo, fovId);
-    writetable(bitManifest, bitManifestPath);
-    save(datasetInfoPath, 'fovId', 'bitInfo', 'bitNum', 'sliceNum', ...
-        'widI', 'lenI', 'selectedTrainingIndices', 'referenceBitIndex');
-else
-    disp('Mouse colon data files already exist; reusing prepared .mat inputs.');
-end
-
-% --------------------------- Generate POI Data ---------------------------
-poiGlob = dir(fullfile(datasetRoot, ...
-    'fitted_elliptical_Gaussian_PSF_MERFISH_analysis_xSigma*_ySigma*.mat'));
-POIFilesMissing = isempty(poiGlob);
-
-if POIFilesMissing
-    disp('Fitting and generating POI data...');
-    IAll = loadData(dataAllPath);
-    fitPointsNumPerI = 30;
-    tol = 0.99;
-    [PSF, xSigma, ySigma] = fit2DGaussPOI(IAll, fitPointsNumPerI, tol);
-    POISaveFileName = sprintf('fitted_elliptical_Gaussian_PSF_MERFISH_analysis_xSigma%.2f_ySigma%.2f.mat', ...
-        xSigma, ySigma);
-    save(fullfile(datasetRoot, POISaveFileName), 'PSF');
-    clear IAll;
-end
-
-% ---------------------------- Codebook Setup -----------------------------
-[Codebook, bitNames, isBlank] = loadMouseColonCodebook(codebookCsvPath, fpkmMatbPath);
-if numel(bitNames) ~= bitNum
-    error('Codebook bit count (%d) does not match mouse colon data organization (%d).', ...
-        numel(bitNames), bitNum);
-end
-
-dataBitNames = string({bitInfo.bitName});
-if ~isequal(dataBitNames(:), bitNames(:))
-    error(['Mouse colon data_organization bit order does not match the codebook bit_names order. ', ...
-        'This would invalidate decoding; please inspect the bit ordering.']);
-end
-
-% ----------------------------- Model Setup -------------------------------
-disp('Using bundled mouse colon model.');
-% Load the bundled mouse colon model:
-modelPath = fullfile(savePath, 'Mdl_04-27-15-58-00_by_data_all.mat');
-requireFile(modelPath);
-modelInfo = load(modelPath, 'modelID');
-modelID = string(modelInfo.modelID);
-
-% --------------------------- Model Prediction ----------------------------
-disp('Processing image data with the model...');
-% Set prediction parameters:
-patchSize = [256 256];
-batchSize = 16;
-patchStride = [128 128];
-outputISyn = false;
-outputBG = false;
-useGPU = true;
-
-predPaths = cell(bitNum, 1);
-for bitIdx = 1:bitNum
-    predPaths{bitIdx} = fullfile(savePath, ...
-        sprintf('PredRes_data_bit%02d_by_Mdl_%s.mat', bitIdx, char(modelID)));
-    if exist(predPaths{bitIdx}, 'file') ~= 2
-        DEPAFPred(modelPath, bitDataPaths{bitIdx}, ...
-            'batchSize', batchSize, ...
-            'patchSize', patchSize, ...
-            'patchStride', patchStride, ...
-            'resSavePath', savePath, ...
-            'outputISyn', outputISyn, ...
-            'outputBG', outputBG, ...
-            'useGPU', useGPU);
-    end
-end
-
-% ----------------------------- Gene Decoding -----------------------------
-disp('Building post-pairwise candidates and decoding localization results...');
-% Build pairwise localization candidates:
-matchThresh = 1.0;
+fovId = 173;
+matchThresh = 1;
 cropBorder = 10;
-candidatePath = fullfile(savePath, 'pairwise_amp_candidates.mat');
-evalPath = fullfile(savePath, sprintf('EvalRes_Mdl_%s.mat', char(modelID)));
-
-if exist(candidatePath, 'file') ~= 2
-    buildPairwiseAmplitudeCandidates(predPaths, matchThresh, cropBorder, candidatePath);
-else
-    disp('Pairwise candidate file already exists; reusing saved candidates.');
-end
-
-% ------------------ Post-pairwise Coordinate Descent ---------------------
-disp('Optimizing bit-level amplitude pruning thresholds...');
-% Optimize bit-level amplitude thresholds and decode genes:
+patchSize = [256 256];
+patchStride = [128 128];
+batchSize = 16;
 percentileCandidates = [0 1 2 3 4 5 6 8 10 12 15 18 20 25 30 35 40 45 50];
 maxRounds = 6;
-thresholdPath = fullfile(savePath, 'bit_level_cd_best_thresholds.csv');
-summaryPath = fullfile(savePath, 'bit_level_cd_best_summary.csv');
-acceptedPath = fullfile(savePath, 'bit_level_cd_accepted_steps.csv');
-trialPath = fullfile(savePath, 'bit_level_cd_trials.csv');
-decodedPath = fullfile(savePath, 'decoded_barcodes_bit_level_cd_best.csv');
-metricsPath = fullfile(savePath, 'depaf_baseline_aligned_metrics.csv');
 
-if exist(thresholdPath, 'file') ~= 2 || exist(evalPath, 'file') ~= 2
-    decodeResult = runPostPairwiseBitLevelCoordinateDescent( ...
-        candidatePath, Codebook, isBlank, percentileCandidates, maxRounds, ...
-        evalPath, summaryPath, thresholdPath, acceptedPath, trialPath, decodedPath);
-else
-    disp('Coordinate-descent outputs already exist; reusing saved EvalRes file.');
-    decodeResult = load(evalPath);
+options = struct('retrainModel', retrainModel, 'datasetRoot', char(datasetRoot), ...
+    'modelPath', char(modelPath), 'outputRoot', char(outputRoot), ...
+    'preparedDataRoot', char(preparedDataRoot), 'useGPU', useGPU, ...
+    'useParallel', useParallel, 'trainingOptions', trainingOptions, 'seed', seed);
+
+oldPath = path;
+oldRng = rng;
+mouseColonSessionCleanup = onCleanup(@() restoreMouseColonSession(oldPath, oldRng));
+try
+    % --------------------------- Data Organization ---------------------------
+    addpath(genpath(fullfile(codeDir, '..', '..', '..', 'DEPAF_src_replication')), '-begin');
+    addpath(codeDir, '-begin');
+    requireFile(options.modelPath);
+    sourceModel = load(options.modelPath, 'userSetParams', 'modelID');
+    training = sourceModel.userSetParams.Results;
+    training = rmfield(training, {'dataPath', 'POIPath', 'modelSavePath'});
+    overrides = fieldnames(options.trainingOptions);
+    for i = 1:numel(overrides)
+        name = overrides{i};
+        if ~isfield(training, name)
+            error('Unknown training option: %s', name);
+        end
+        training.(name) = options.trainingOptions.(name);
+    end
+    if ~isempty(options.useGPU)
+        training.useGPU = options.useGPU;
+    end
+    if ~isempty(options.useParallel)
+        training.useParallel = options.useParallel;
+    end
+    rng(options.seed, 'twister');
+    if training.useGPU
+        gpuState = gpurng;
+        mouseColonGpuCleanup = onCleanup(@() gpurng(gpuState));
+        gpurng(options.seed);
+    end
+
+    settingsRoot = fullfile(options.datasetRoot, 'settings');
+    bitInfo = loadMouseColonBitInfo(fullfile(settingsRoot, 'data_organization.csv'));
+    [Codebook, bitNames, isBlank] = loadMouseColonCodebook( ...
+        fullfile(settingsRoot, 'Fibl2v1E1_codebook.csv'), fullfile(settingsRoot, 'FPKM.matb'));
+    if ~isequal(string({bitInfo.bitName})', bitNames(:))
+        error('Mouse colon data organization and codebook bit orders differ.');
+    end
+    bitNum = numel(bitInfo);
+    ensureDirectory(options.outputRoot);
+    runDir = tempname(options.outputRoot);
+    mkdir(runDir);
+    writetable(buildBitManifestTable(bitInfo, fovId), fullfile(runDir, 'bit_manifest.csv'));
+    save(fullfile(runDir, 'configuration.mat'), 'options', 'training', 'fovId', ...
+        'matchThresh', 'cropBorder', 'patchSize', 'patchStride', 'batchSize', 'percentileCandidates', 'maxRounds');
+
+    processedRoot = char(options.preparedDataRoot);
+    if isempty(processedRoot)
+        processedRoot = fullfile(runDir, 'processed');
+        mkdir(processedRoot);
+        rawRoot = fullfile(options.datasetRoot, 'raw');
+        requireDirectory(rawRoot);
+        [widI, lenI] = getMouseColonImageSize(rawRoot, fovId, bitInfo(1));
+        bitDataPaths = arrayfun(@(b) fullfile(processedRoot, sprintf('data_bit%02d.mat', b)), ...
+            1:bitNum, 'UniformOutput', false);
+        colorTransforms = LoadByteStreamLocal(fullfile(settingsRoot, 'Transforms.matb'));
+        prepareMouseColonDatasets(rawRoot, fovId, bitInfo, widI, lenI, 0, colorTransforms, ...
+            [0 0 1], fullfile(processedRoot, 'data_all.mat'), bitDataPaths);
+    else
+        bitDataPaths = arrayfun(@(b) fullfile(processedRoot, sprintf('data_bit%02d.mat', b)), ...
+            1:bitNum, 'UniformOutput', false);
+        for b = 1:bitNum
+            requireFile(bitDataPaths{b});
+        end
+    end
+
+    % --------------------------- Generate POI Data ---------------------------
+    modelPath = char(options.modelPath);
+    if options.retrainModel
+        modelRoot = fullfile(runDir, 'trained_model');
+        mkdir(modelRoot);
+        dataAllPath = fullfile(runDir, 'data_all.mat');
+        n = max([training.trainIdxRange(:); training.valIdxRange(:)]);
+        selectedTrainingIndices = makeMouseColonTrainingStack(bitDataPaths, n, dataAllPath);
+        save(fullfile(runDir, 'training_selection.mat'), 'selectedTrainingIndices');
+        IAll = loadData(dataAllPath);
+        [PSF, xSigma, ySigma] = fit2DGaussPOI(IAll, 30, 0.99);
+        clear IAll;
+        POIPath = fullfile(runDir, 'fitted_PSF.mat');
+        save(POIPath, 'PSF');
+        save(fullfile(runDir, 'fitted_PSF_parameters.mat'), 'xSigma', 'ySigma');
+
+        % ---------------------------- Model Training -----------------------------
+        lambda = training.lambda;
+        settings = rmfield(training, 'lambda');
+        pairs = [fieldnames(settings) struct2cell(settings)]';
+        DEPAFTrain(dataAllPath, POIPath, lambda, pairs{:}, 'modelSavePath', modelRoot);
+        models = dir(fullfile(modelRoot, 'Mdl_*.mat'));
+        if numel(models) ~= 1
+            error('Expected one newly completed mouse colon model.');
+        end
+        modelPath = fullfile(models(1).folder, models(1).name);
+    end
+
+    % --------------------------- Model Prediction ----------------------------
+    model = load(modelPath, 'modelID');
+    save(fullfile(runDir, 'model_used.mat'), 'modelPath', 'model');
+    predRoot = fullfile(runDir, 'predictions');
+    mkdir(predRoot);
+    predPaths = cell(bitNum, 1);
+    for b = 1:bitNum
+        DEPAFPred(modelPath, bitDataPaths{b}, 'batchSize', batchSize, 'patchSize', patchSize, ...
+            'patchStride', patchStride, 'resSavePath', predRoot, 'outputISyn', false, ...
+            'outputBG', false, 'useGPU', training.useGPU);
+        predPaths{b} = fullfile(predRoot, sprintf('PredRes_data_bit%02d_by_Mdl_%s.mat', b, char(model.modelID)));
+    end
+
+    % ----------------------------- Gene Decoding -----------------------------
+    candidatePath = fullfile(runDir, 'pairwise_amp_candidates.mat');
+    buildPairwiseAmplitudeCandidates(predPaths, matchThresh, cropBorder, candidatePath);
+    evalPath = fullfile(runDir, sprintf('EvalRes_Mdl_%s.mat', char(model.modelID)));
+    result = runPostPairwiseBitLevelCoordinateDescent(candidatePath, Codebook, isBlank, ...
+        percentileCandidates, maxRounds, evalPath, fullfile(runDir, 'bit_level_cd_best_summary.csv'), ...
+        fullfile(runDir, 'bit_level_cd_best_thresholds.csv'), fullfile(runDir, 'bit_level_cd_accepted_steps.csv'), ...
+        fullfile(runDir, 'bit_level_cd_trials.csv'), fullfile(runDir, 'decoded_barcodes_bit_level_cd_best.csv'));
+
+    % --------------------------- Result Evaluation ---------------------------
+    computeBaselineAlignedMetrics(result.perfectDecodedGeneNum, ...
+        result.decodedGeneNum - result.perfectDecodedGeneNum, Codebook, isBlank, ...
+        fullfile(runDir, 'depaf_baseline_aligned_metrics.csv'));
+    fprintf('Mouse colon results: %s\n', runDir);
+catch mouseColonException
+    clear mouseColonGpuCleanup mouseColonSessionCleanup;
+    rethrow(mouseColonException);
+end
+clear mouseColonGpuCleanup mouseColonSessionCleanup;
+
+function restoreMouseColonSession(oldPath,oldRng)
+path(oldPath);rng(oldRng);
 end
 
-computeBaselineAlignedMetrics( ...
-    decodeResult.perfectDecodedGeneNum, ...
-    decodeResult.decodedGeneNum - decodeResult.perfectDecodedGeneNum, ...
-    Codebook, isBlank, metricsPath);
-disp('Mouse colon MERFISH reproduction finished.');
-
+function selected=makeMouseColonTrainingStack(bitPaths,n,savePath)
+counts=zeros(numel(bitPaths),1);
+for b=1:numel(bitPaths),[~,~,counts(b)]=loadDataSize(bitPaths{b});end
+selected=randperm(sum(counts),n);
+sample=load(bitPaths{1},'I');
+IAll=zeros(size(sample.I,1),size(sample.I,2),n,'like',sample.I);clear sample;
+edges=[0;cumsum(counts)];
+for b=1:numel(bitPaths)
+    rows=find(selected>edges(b)&selected<=edges(b+1));
+    if isempty(rows),continue;end
+    data=load(bitPaths{b},'I');
+    IAll(:,:,rows)=data.I(:,:,selected(rows)-edges(b));
+end
+save(savePath,'IAll');
+end
 
 function requireFile(filePath)
 if exist(filePath, 'file') ~= 2
@@ -318,6 +321,7 @@ referenceImage = beadI(:, :, referenceBitIndex);
 
 % Calculate transformation matrices for registration:
 disp('Calculating transformation matrices for registration...');
+registrationRngBefore = rng;
 transforms = cell(bitNum, 1);
 for bitIdx = 1:bitNum
     if bitIdx == referenceBitIndex
@@ -330,7 +334,9 @@ end
 % Load and process signal images, and save data for prediction:
 disp('Loading and processing signal images and saving...');
 numIAll = bitNum * sliceNum;
-IAll = zeros(widI, lenI, numIAll, 'uint16');
+if trainDataSelectNum > 0
+    IAll = zeros(widI, lenI, numIAll, 'uint16');
+end
 count = 0;
 
 for bitIdx = 1:bitNum
@@ -359,7 +365,7 @@ for bitIdx = 1:bitNum
         end
 
         I(:, :, sliceIdx) = singleI;
-        IAll(:, :, count) = singleI;
+        if trainDataSelectNum > 0,IAll(:, :, count) = singleI;end
     end
 
     save(bitDataPaths{bitIdx}, 'I');
@@ -368,8 +374,13 @@ end
 % Randomly select training data:
 selectedCount = min(trainDataSelectNum, numIAll);
 selectedTrainingIndices = randperm(numIAll, selectedCount);
-IAll = IAll(:, :, selectedTrainingIndices);
-save(dataAllPath, 'IAll');
+if trainDataSelectNum > 0
+    IAll = IAll(:, :, selectedTrainingIndices);
+    save(dataAllPath, 'IAll');
+end
+save(fullfile(fileparts(dataAllPath),'preprocessing_state.mat'), ...
+    'transforms','referenceBitIndex','refImg','refCdf','featureCounts', ...
+    'cameraOrientation','registrationRngBefore','selectedTrainingIndices');
 end
 
 
@@ -812,7 +823,7 @@ perfectFPKMCorr = finalSummary.fpkm_corr_exact;
 matchThresh = loaded.metadata.matchThresh;
 save(evalPath, 'decodeRes', 'perfectDecodeRes', 'decodedGeneNum', ...
     'perfectDecodedGeneNum', 'FPKM', 'correctionRate', 'FPKMCorr', ...
-    'perfectFPKMCorr', 'matchThresh', 'thresholdRows');
+    'perfectFPKMCorr', 'matchThresh', 'thresholdRows', 'thresholdTable');
 
 decodeResult = load(evalPath);
 end
@@ -910,7 +921,7 @@ for bitIdx = 1:bitNum
     if isempty(values)
         continue;
     end
-    thresholdTable(bitIdx, :) = single(prctile(double(values), percentileCandidates));
+    thresholdTable(bitIdx, :) = single(mouseColonPercentileLinear(double(values), percentileCandidates));
     thresholdTable(bitIdx, percentileCandidates == 0) = 0;
 end
 end

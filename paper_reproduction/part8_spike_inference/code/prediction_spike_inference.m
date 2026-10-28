@@ -15,8 +15,8 @@ for SNR = {'Low', 'Medium', 'High'}
             patchSize = [1024 1]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
             patchStride = [512 1]; % Stride for block prediction
             resSavePath = '..\models\'; % Path to save prediction results
-            outputISyn = false; % Whether to predict and output noiseless synthetic images
-            outputBG = false; % Whether to predict and output noiseless background images
+            outputISyn = false; % Whether to predict and output synthetic images
+            outputBG = false; % Whether to predict and output estimated background images
             useGPU = true; % Whether to use GPU
 
             DEPAFPred(modelPath, dataPath, ...

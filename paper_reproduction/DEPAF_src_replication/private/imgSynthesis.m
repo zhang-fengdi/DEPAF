@@ -1,5 +1,5 @@
 function ISyn = imgSynthesis(ISize, loc, amplitude, POI, interpMethod)
-% imgSynthesis Generates a noise synthesis image based on location, amplitude, and POI.
+% imgSynthesis Generates a synthetic image based on location, amplitude, and POI.
 %
 %  This function generates a synthesized image based on specified location, amplitude,
 %  and POI sample.

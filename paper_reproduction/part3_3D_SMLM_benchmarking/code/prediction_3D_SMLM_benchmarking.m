@@ -11,8 +11,8 @@ batchSize = 64; % Batch size for single prediction
 patchSize = [96 96]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
 patchStride = [48 48]; % Stride for block prediction
 resSavePath = '..\models\'; % Path to save prediction results
-outputISyn = false; % Whether to predict and output noiseless synthetic images
-outputBG = false; % Whether to predict and output noiseless background images
+outputISyn = false; % Whether to predict and output synthetic images
+outputBG = false; % Whether to predict and output estimated background images
 useGPU = true; % Whether to use GPU
 
 DEPAFPred(modelPath, dataPath, ...

@@ -185,7 +185,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     
     </details>
 
-6. After training the model, perform predictions using the example below:
+5. After training the model, perform predictions using the example below:
 
     ```matlab
     % Parameters:
@@ -195,7 +195,7 @@ This video demonstrates DEPAF’s ability to denoise two-photon calcium imaging 
     patchSize = [64 64]; % Patch size for prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
     patchStride = [32 32]; % Patch stride for prediction
     resSavePath = '.\'; % Path to save prediction results
-    outputISyn = false; % Output noiseless synthetic images
+    outputISyn = false; % Output synthetic images
     outputBG = false; % Output background images
     useGPU = true; % Use GPU
 

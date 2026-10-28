@@ -75,9 +75,9 @@ To reproduce the paper results, use MATLAB R2024b and follow these steps:
 
 3. **Run reproduction code**:
    - Run MATLAB, open the subfolder corresponding to the desired part to reproduce, and navigate to the `code` directory.
-   - Run the prediction and evaluation scripts using the supplied models. Training scripts are optional.
+   - Run the required preprocessing, followed by prediction and evaluation using the supplied models. Model retraining is optional.
 
-   **Note**: To ensure precise reproduction of the paper's results, it is recommended to use the downloaded models directly for prediction and subsequent processing. Re-training the models may lead to results that differ from those reported in the paper.
+   **Note**: To ensure precise reproduction of the paper's results, it is recommended to use the downloaded models directly for prediction and subsequent processing. Retraining the models may lead to results that differ from those reported in the paper.
 
 ## References
 

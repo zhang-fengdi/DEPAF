@@ -1,234 +1,81 @@
-function infoFile = ReadInfoFile(varargin)
-%--------------------------------------------------------------------------
-% infoFile = ReadInfoFile(fileName, varargin)
-% This function returns a structure, info, containing the elements of an
-% .inf file.
-%--------------------------------------------------------------------------
-% Outputs:
-% info/struct: A structure array containing the elements of the info file
+function infoFile = ReadInfoFile(fileName)
+% ReadInfoFile reads the INF metadata needed for full-frame DAX loading.
+% fileName is an explicit .inf path or the path of its associated .dax file.
+% Returned fields describe the local file, dimensions, binning, frame count
+% and data type, plus image bounds when present. Other metadata are ignored.
 %
-%--------------------------------------------------------------------------
-% Inputs:
-% fileName/string or cell array of strings ([]): A path to a .dax or .ini
-%   file
-% Field: explanation
-%                  localName: inf filename matlab found / should save as
-%                  localPath: where matlab found / should save this file
-%                   uniqueID: ?
-%                       file: full path to daxfile.
-%               machine_name: e.g. 'storm2'
-%            parameters_file: Full pathname of pars file used in Hal
-%              shutters_file: e.g. 'shutters_default.xml'
-%                   CCD_mode: e.g. 'frame-transfer'
-%                  data_type: '16 bit integers (binary, big endian)'
-%           frame_dimensions: [256 256]
-%                    binning: [1 1]
-%                 frame_size: 262144
-%     horizontal_shift_speed: 10
-%       vertical_shift_speed: 3.3000
-%                 EMCCD_Gain: 20
-%                Preamp_Gain: 5
-%              Exposure_Time: 0.1000
-%          Frames_Per_Second: 9.8280
-%         camera_temperature: -70
-%           number_of_frames: 10
-%                camera_head: 'DU897_BV'
-%                     hstart: 1
-%                       hend: 256
-%                     vstart: 1
-%                       vend: 256
-%                  ADChannel: 0
-%                    Stage_X: 0
-%                    Stage_Y: 5
-%                    Stage_Z: 0
-%                Lock_Target: 0
-%                   scalemax: 4038
-%                   scalemin: 0
-%                      notes: ''
-%--------------------------------------------------------------------------
-% Variable Inputs:
-% 'file'/string or cell array: The file name(s) for the .ini file(s) to load
-%   Path must be included.
-%
-% 'verbose'/boolean(true): Determines if the function hides progress
-%--------------------------------------------------------------------------
-% Jeffrey Moffitt
-% September 5, 2012
+% Adapted from ReadInfoFile by Jeffrey Moffitt, September 5, 2012.
 % jeffmoffitt@gmail.com
-%
-% Version 1.0
-%--------------------------------------------------------------------------
 
-%--------------------------------------------------------------------------
-% Hardcoded variables
-%--------------------------------------------------------------------------
-flags = {'file', 'verbose', 'path'};
-
-%--------------------------------------------------------------------------
-% Global Variables
-%--------------------------------------------------------------------------
-global defaultDataPath;
-
-%--------------------------------------------------------------------------
-% Define default parameters
-%--------------------------------------------------------------------------
-infFileName = [];
-dataPath = defaultDataPath;
-verbose = false;
-
-%--------------------------------------------------------------------------
-% Parse Required Input
-%--------------------------------------------------------------------------
-if nargin >= 1
-    if ~ismember(varargin{1}, flags)
-        infFileName =varargin{1};
-        varargin = varargin(2:end);
-    end
+if ~(ischar(fileName) && isrow(fileName)) && ~(isstring(fileName) && isscalar(fileName))
+    error('ReadInfoFile:FileName', 'Specify one INF or DAX file path.');
 end
-
-%--------------------------------------------------------------------------
-% Parse Variable Input Arguments
-%--------------------------------------------------------------------------
-if (mod(length(varargin), 2) ~= 0 ),
-    error(['Extra Parameters passed to the function ''' mfilename ''' must be passed in pairs.']);
+fileName = char(fileName);
+[folder, name, extension] = fileparts(fileName);
+if strcmpi(extension, '.dax')
+    fileName = fullfile(folder, [name '.inf']);
+elseif ~strcmpi(extension, '.inf')
+    error('ReadInfoFile:Extension', 'The file path must end in .inf or .dax.');
 end
-parameterCount = length(varargin)/2;
-
-for parameterIndex = 1:parameterCount,
-    parameterName = varargin{parameterIndex*2 - 1};
-    parameterValue = varargin{parameterIndex*2};
-    switch parameterName
-        case 'file'
-            validateattributes(parameterValue, {'char'}, {}, mfilename, 'file');
-            infFileName = parameterValue;
-        case 'path'
-            validateattributes(parameterValue, {'char'}, {}, mfilename, 'path');
-            dataPath = parameterValue;
-        case 'verbose'
-            validateattributes(parameterValue, {'logical','numeric'}, {'scalar','binary'}, mfilename, 'verbose');
-            verbose = parameterValue;
-        otherwise
-            error(['The parameter ''' parameterName ''' is not recognized by the function ''' mfilename '''.']);
-    end
+fid = fopen(fileName, 'r');
+if fid < 0
+    error('ReadInfoFile:OpenFailed', 'Cannot open INF file: %s.', fileName);
 end
-
-%--------------------------------------------------------------------------
-% Get file if needed
-%--------------------------------------------------------------------------
-if isempty(infFileName)
-    [infFileName infFilePath] = uigetfile([dataPath '*.inf']);
-    if isempty(infFileName)
-        display('Loading canceled');
-        infoFile = [];
-        return;
-    end
-    if infFilePath(end) ~= '\'
-        infFilePath = [infFilePath '\']; % All paths must end in '\'
-    end
-    infFileName = [infFilePath infFileName];
+fileCleanup = onCleanup(@() fclose(fid));
+[folder, name, extension] = fileparts(fileName);
+if isempty(folder)
+    folder = '.';
 end
-
-%--------------------------------------------------------------------------
-% Open Inf File
-%--------------------------------------------------------------------------
-if strcmp(infFileName((end-3):end), '.dax')
-    infFileName = [infFileName(1:(end-4)) '.inf'];
-end
-
-% Open file
-fid = fopen(infFileName);
-if fid == -1
-    error([infFileName ' is not a valid .inf file']);
-end
-
-%--------------------------------------------------------------------------
-% Read Inf File
-%--------------------------------------------------------------------------
-count = 1;
-text = {};
-while ~feof(fid)
-    text{count} = fgetl(fid);
-    count = count + 1;
-end
-fclose(fid);
-
-%--------------------------------------------------------------------------
-% Create Info File
-%--------------------------------------------------------------------------
-% infoFile = CreateInfoFileStructure();
-[infFilePath, name, extension] = fileparts(infFileName);
 infoFile.localName = [name extension];
-infoFile.localPath = [infFilePath, filesep];
-infoFile.uniqueID = now;
+infoFile.localPath = [folder filesep];
 
-%--------------------------------------------------------------------------
-% Parse each line and build ini structure
-%--------------------------------------------------------------------------
-for j=1:length(text)
-
-    % Does the line contain a definition
-    posEqual = strfind(text{j}, '=');
-    if ~isempty(posEqual)
-
-        %Parse value
-        value = strtrim(text{j}((posEqual+1):end)); % Read value
-        posX = strfind(value, ' x '); % Find a potential 'X'--a flag of a 2 element entry
-        posColon = strfind(value, ':'); % Is there a colon?
-        if ~isempty(posX) && isempty(posColon)% Parse both elements
-            value1 = value(1:(posX-1));
-            value2 = value((posX+2):end);
+while true
+    line = fgetl(fid);
+    if ~ischar(line)
+        break;
+    end
+    equals = strfind(line, '=');
+    if isempty(equals)
+        continue;
+    end
+    equals = equals(1);
+    key = regexprep(lower(strtrim(line(1:equals-1))), '[^a-z]', '');
+    switch key
+        case 'framedimensions'
+            fieldName = 'frameDimensions';
+        case 'numberofframes'
+            fieldName = 'numberOfFrames';
+        case 'datatype'
+            fieldName = 'dataType';
+        case {'binning','hstart','hend','vstart','vend'}
+            fieldName = key;
+        otherwise
+            continue;
+    end
+    value = strtrim(line(equals+1:end));
+    if strcmp(fieldName, 'dataType')
+        infoFile.dataType = value;
+    else
+        fieldValue = str2num(strrep(value, ' x ', ' '), 'Evaluation', 'restricted'); %#ok<ST2NM>
+        if isempty(fieldValue)
+            error('ReadInfoFile:NumericValue', 'Invalid numeric value for INF field %s.', fieldName);
         end
-
-        %Prepare field name
-        fieldName = coerceFieldName(text{j}(1:(posEqual-1)));
-
-        %Prepare value
-        if ~isempty(posX) && isempty(posColon)
-            infoFile.(fieldName) = [str2num(value1) str2num(value2)];
-        else
-            fieldValue = str2num(value);
-            if isempty(fieldValue) %The value is a string
-                fieldValue = value;
-            end
-            infoFile.(fieldName) = fieldValue;
-        end
-
-    elseif strcmp(text{j}, 'information file for')  %If the line does not contain a definition, then the next line is the file name
-        infoFile.file = text{j+1};
+        infoFile.(fieldName) = fieldValue;
     end
 end
-
-if verbose
-    display(['Loaded ' infFilePath, filesep, name, '.inf']);
+required = {'frameDimensions','binning','numberOfFrames','dataType'};
+for k = 1:numel(required)
+    if ~isfield(infoFile, required{k})
+        error('ReadInfoFile:MissingField', 'Missing required INF field: %s.', required{k});
+    end
 end
-
-%--------------------------------------------------------------------------
-% Check frame dimensions
-%--------------------------------------------------------------------------
 if any(infoFile.frameDimensions == 0)
+    bounds = {'hstart','hend','vstart','vend'};
+    if ~all(isfield(infoFile, bounds))
+        error('ReadInfoFile:MissingBounds', 'Zero frame dimensions require hstart, hend, vstart and vend.');
+    end
     warning('matlabSTORM:corruptedInfoFile', 'Unexpected frame dimensions');
-    infoFile.frameDimensions = [infoFile.hend - infoFile.hstart + 1, ...
-        infoFile.vend - infoFile.vstart + 1];
+    infoFile.frameDimensions = [infoFile.hend-infoFile.hstart+1, ...
+                                infoFile.vend-infoFile.vstart+1];
 end
-end
-
-
-% Helper function: Coercing field names into a consistent format.
-function name = coerceFieldName(name)
-% Ignore all characters, extract all words:
-words = extract(name, lettersPattern);
-for i = 2:length(words)
-    words{i}(1) = upper(words{i}(1));
-end
-
-% If the first two letters of the first word are uppercase, do nothing;
-% otherwise, force the first letter to lowercase:
-if words{1}(1) == upper(words{1}(1)) && words{1}(2) == upper(words{1}(2))
-else
-    words{1}(1) = lower(words{1}(1));
-end
-
-% Concatenate all words:
-name = join(words, '');
-name = name{1};
 end

@@ -68,7 +68,7 @@ for bitIdx = 1:length(signalFileNamesForBit)
 end
 
 POIFilesMissing = false;
-if isempty(dir(['..\datasets\fitted_elliptical_Gaussian_PSF_' ...
+if retrainModel && isempty(dir(['..\datasets\fitted_elliptical_Gaussian_PSF_' ...
         'MERFISH_analysis_xSigma*_ySigma*.mat']))
     disp('POI data files are missing, preparing to generate...');
     POIFilesMissing = true;
@@ -174,7 +174,7 @@ if dataFilesMissing
 end
 
 % --------------------------- Generate POI Data ---------------------------
-if POIFilesMissing
+if retrainModel && POIFilesMissing
     disp('Fitting and generating POI data...');
     % Load training data:
     IAll = loadData('..\datasets\data_all.mat');
@@ -278,8 +278,8 @@ for i = 1:length(dataDir)
     patchSize = [256 256]; % Patch size for sampling
     patchStride = [128 128]; % Stride for block prediction
     resSavePath = savePath; % Path to save prediction results
-    outputISyn = false; % Whether to predict and output noiseless synthetic images
-    outputBG = false; % Whether to predict and output noiseless background images
+    outputISyn = false; % Whether to predict and output synthetic images
+    outputBG = false; % Whether to predict and output estimated background images
     useGPU = true; % Whether to use GPU
 
     DEPAFPred(modelPath, dataPath, ...

@@ -23,8 +23,8 @@ for i = 1:size(LUT,1)
         patchSize = [256 256]; % Patch size for block prediction (each non-singleton dimension must be a multiple of 2^encoderDepth)
         patchStride = [128 128]; % Stride for block prediction
         resSavePath = '..\models\'; % Path to save prediction results
-        outputISyn = true; % Whether to predict and output noiseless synthetic images
-        outputBG = true; % Whether to predict and output noiseless background images
+        outputISyn = true; % Whether to predict and output synthetic images
+        outputBG = true; % Whether to predict and output estimated background images
         useGPU = true; % Whether to use GPU
 
         DEPAFPred(modelPath, dataPath, ...

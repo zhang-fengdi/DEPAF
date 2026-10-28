@@ -58,6 +58,15 @@ if channelNum > 1
     Xq = single(Xq);
     Yq = single(Yq);
     Zq = single(Zq);
+    % Supply spatial neighbors only for singleton dimensions.
+    if widPOI == 1
+        POI = padarray(POI, [1 0 0], 'replicate', 'both');
+        Yq = Yq + 1;
+    end
+    if lenPOI == 1
+        POI = padarray(POI, [0 1 0], 'replicate', 'both');
+        Xq = Xq + 1;
+    end
     POI = interp3(POI, Xq, Yq, Zq, interpMethod);
 end
 
